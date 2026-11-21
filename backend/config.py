@@ -9,6 +9,11 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
     
+    # OpenRouter API Fallback Configuration
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_MODEL: str = "google/gemini-2.5-flash"
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    
     # Persistence Mode: "sqlite" (default local), "memory" (json), or "firestore" (GCP production)
     DATA_STORE_MODE: Literal["sqlite", "memory", "firestore"] = "sqlite"
     SQLITE_DB_PATH: str = "backend/data/civicsetu.db"

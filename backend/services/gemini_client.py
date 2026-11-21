@@ -8,6 +8,7 @@ from google import genai
 from google.genai import types
 
 from backend.config import settings
+from backend.services.openrouter_client import openrouter_client
 
 logger = logging.getLogger("civicsetu.gemini")
 
@@ -52,10 +53,22 @@ class GeminiClient:
         Includes 1-retry backoff and circuit-breaker fallback for demo reliability.
         """
         if not self._client:
+            # Check if OpenRouter fallback is configured
+            if openrouter_client.is_configured:
+                logger.info("Gemini client not initialized. Falling back to OpenRouter API.")
+                try:
+                    return await openrouter_client.generate_structured(
+                        contents=contents,
+                        response_schema=response_schema,
+                        system_instruction=system_instruction,
+                    )
+                except Exception as openrouter_err:
+                    logger.error(f"OpenRouter fallback also failed: {openrouter_err}")
+
             if settings.DEMO_FALLBACK_ON_QUOTA and fallback_data is not None:
                 logger.warning("Gemini client not configured. Returning deterministic demo fallback.")
                 return fallback_data
-            raise RuntimeError("Gemini API key is not configured and no demo fallback was provided.")
+            raise RuntimeError("Gemini API key is not configured and no fallback was available.")
 
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
@@ -99,6 +112,18 @@ class GeminiClient:
                 if attempt == 0 and not is_rate_limit:
                     await asyncio.sleep(1.0)
                     continue
+
+                # Auto fallback to OpenRouter API if Gemini attempt failed
+                if openrouter_client.is_configured:
+                    logger.warning("Gemini API call failed. Executing automatic fallback to OpenRouter API.")
+                    try:
+                        return await openrouter_client.generate_structured(
+                            contents=contents,
+                            response_schema=response_schema,
+                            system_instruction=system_instruction,
+                        )
+                    except Exception as openrouter_err:
+                        logger.error(f"OpenRouter fallback attempt failed: {openrouter_err}")
                 
                 if is_rate_limit and settings.DEMO_FALLBACK_ON_QUOTA and fallback_data is not None:
                     logger.warning("429 Quota exhausted. Triggering demo fallback circuit-breaker.")
