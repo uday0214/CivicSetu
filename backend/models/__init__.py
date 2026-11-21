@@ -22,6 +22,14 @@ from backend.models.intake import (
     IntakeTriageResponse,
     IntakeSubmissionResult,
 )
+from backend.models.dedup import (
+    DedupCandidateSummary,
+    DedupComparisonResponse,
+    DedupCheckRequest,
+    DedupCheckResult,
+    ReportSubmissionRequest,
+    ReportSubmissionResponse,
+)
 from backend.models.state_machine import (
     is_valid_status_transition,
     validate_resolution_closure,
@@ -47,6 +55,12 @@ __all__ = [
     "RawCitizenInput",
     "IntakeTriageResponse",
     "IntakeSubmissionResult",
+    "DedupCandidateSummary",
+    "DedupComparisonResponse",
+    "DedupCheckRequest",
+    "DedupCheckResult",
+    "ReportSubmissionRequest",
+    "ReportSubmissionResponse",
     "is_valid_status_transition",
     "validate_resolution_closure",
     "compute_sla_deadline",

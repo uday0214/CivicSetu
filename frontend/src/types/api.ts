@@ -125,6 +125,58 @@ export interface IntakeSubmissionResult {
   triage: IntakeTriageResponse;
 }
 
+export interface DedupCheckRequest {
+  lat: number;
+  lng: number;
+  category?: CivicCategory | null;
+  title?: string | null;
+  description?: string | null;
+  landmark?: string | null;
+}
+
+export interface DedupCheckResult {
+  has_duplicate: boolean;
+  matched_incident_id?: string | null;
+  distance_meters?: number | null;
+  similarity_reason?: string | null;
+  matched_incident?: MasterIncident | null;
+}
+
+export interface ReportSubmissionRequest {
+  title: string;
+  description_standardized_en: string;
+  category: CivicCategory;
+  priority: PriorityTier;
+  agency: IndianAgency;
+  ward_id: string;
+  lat: number;
+  lng: number;
+  landmark?: string | null;
+  formatted_address?: string | null;
+  photo_url?: string | null;
+  audio_url?: string | null;
+  raw_text?: string | null;
+  transcription?: string | null;
+  language_detected?: string | null;
+  vernacular_response?: string | null;
+  citizen_contact?: string | null;
+  triage_trace?: ExplainableTriageTrace | null;
+  force_new?: boolean;
+  matched_incident_id?: string | null;
+}
+
+export interface ReportSubmissionResponse {
+  is_duplicate: boolean;
+  master_incident_id: string;
+  report_id: string;
+  community_impact_score: number;
+  supporter_number?: number | null;
+  priority: PriorityTier;
+  priority_escalated: boolean;
+  message_to_citizen: string;
+  master_incident: MasterIncident;
+}
+
 export interface SystemStatus {
   status: string;
   service: string;

@@ -6,7 +6,17 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 
 from backend.storage.media_store import get_media_storage
 from backend.services.intake_service import triage_intake
+from backend.services.dedup_service import (
+    check_for_duplicates,
+    process_report_submission,
+)
 from backend.models.intake import IntakeSubmissionResult
+from backend.models.dedup import (
+    DedupCheckRequest,
+    DedupCheckResult,
+    ReportSubmissionRequest,
+    ReportSubmissionResponse,
+)
 
 logger = logging.getLogger("civicsetu.routes.intake")
 
@@ -88,3 +98,32 @@ async def triage_citizen_report(
         audio_url=audio_url,
         triage=triage_result,
     )
+
+
+@router.post("/check-duplicate", response_model=DedupCheckResult)
+async def check_duplicate_incident(request: DedupCheckRequest):
+    """
+    Checks if an incoming report has any matching duplicate Master Incident within 100 meters.
+    Performs spatial proximity query followed by Gemini semantic verification.
+    """
+    result = await check_for_duplicates(
+        lat=request.lat,
+        lng=request.lng,
+        category=request.category,
+        title=request.title,
+        description=request.description,
+        landmark=request.landmark,
+    )
+    return result
+
+
+@router.post("/submit", response_model=ReportSubmissionResponse)
+async def submit_citizen_report(request: ReportSubmissionRequest):
+    """
+    Finalizes and saves the citizen report.
+    Automatically links to existing Master Incident if a duplicate is found (or explicitly chosen),
+    boosting community impact score (+1) and triggering auto-escalation when thresholds are crossed.
+    Creates a new Master Incident if unique.
+    """
+    response = await process_report_submission(request)
+    return response

@@ -117,13 +117,13 @@ This roadmap is modularized into sequentially numbered sections (`Section 1`, `S
 ## 4. Spatial-Semantic Deduplication & Crowd Impact Engine
 *Goal: Eliminate municipal inbox flooding by automatically grouping duplicate reports into Master Incidents with an escalating Community Impact Score.*
 
-- **4.1. Spatial Proximity Candidate Finder**
+- [x] **4.1. Spatial Proximity Candidate Finder**
   - When a new valid report arrives, compute geospatial distance (Haversine formula) against all active `MasterIncident` locations within a 100-meter radius.
-- **4.2. Gemini Semantic Match Comparator**
+- [x] **4.2. Gemini Semantic Match Comparator**
   - If candidate incidents exist within the 100m radius, pass candidate summaries alongside the new report to Gemini.
   - Prompt checks: Do these describe the exact same physical problem?
   - Returns: `{ "is_duplicate": boolean, "matched_incident_id": string | null, "similarity_reason": string }`.
-- **4.3. Master Incident Escalation & Crowd Upvoting**
+- [x] **4.3. Master Incident Escalation & Crowd Upvoting**
   - If duplicate confirmed:
     - Attach the new `CitizenReport` to the existing `MasterIncident`.
     - Increment `community_impact_score` (+1).
@@ -131,7 +131,7 @@ This roadmap is modularized into sequentially numbered sections (`Section 1`, `S
     - Return response payload informing citizen: *"Issue already tracked! You are supporter #X. Priority escalated."*
   - If no match:
     - Create a new `MasterIncident` with `community_impact_score = 1`.
-- **Acceptance Criteria for Section 4:**
+- **Acceptance Criteria for Section 4 (PASSED):**
   - Submitting two reports for a broken streetlight within 50m correctly links both under 1 Master Incident with `community_impact_score = 2`.
 
 ---
