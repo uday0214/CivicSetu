@@ -234,21 +234,24 @@ This roadmap is modularized into sequentially numbered sections (`Section 1`, `S
 
 ---
 
-## 9. Verification, Quality Assurance & Hackathon Pitch Packaging
+## 9. Verification, Quality Assurance & Hackathon Pitch Packaging [COMPLETED]
 *Goal: Ensure flawless demonstration, robust test coverage, zero console errors, and turnkey single-container Cloud Run deployment.*
 
-- **9.1. Automated Verification Suite**
+- [x] **9.1. Automated Verification Suite**
   - Automated backend API and Pydantic tests (`pytest`):
-    - `test_intake_triage.py`: Unified single-call triage contract, vernacular code-mixing, sanity gate rejection.
-    - `test_deduplication.py`: Geospatial + semantic clustering into single master incident.
-    - `test_resolution_audit.py`: Detection of genuine vs fake contractor repair photos.
-    - `test_escalation_tier.py`: Deterministic escalation level computation.
-  - Frontend verification: Validate clean build (`npm run build`) and full 3-minute E2E demo runbook.
-- **9.2. Single-Container Cloud Run Deployment (Dockerfile)**
+    - `test_intake.py`: Unified single-call triage contract, vernacular code-mixing, sanity gate rejection.
+    - `test_dedup.py`: Geospatial + semantic clustering into single master incident.
+    - `test_audit.py`: Detection of genuine vs fake contractor repair photos.
+    - `test_models.py`: Deterministic escalation level computation and state machine transitions.
+    - `test_admin.py`: KPI computation, work order synthesis, supervisor overrides, and systemic briefing.
+    - `test_seed.py`: 16-incident Bengaluru BBMP seed clusters and multilingual fixtures.
+  - Frontend verification: Validate clean build (`npm run build`) with 0 errors across TypeScript and Vite.
+- [x] **9.2. Single-Container Cloud Run Deployment (Dockerfile)**
   - Multi-stage Dockerfile:
-    1. **Stage 1 (Frontend Builder):** Node.js container runs `npm install && npm run build` to output `frontend/dist`.
-    2. **Stage 2 (FastAPI Production Server):** Python container installs `requirements.txt`, copies `frontend/dist`, mounts static assets via FastAPI `StaticFiles`, and serves the SPA index on catch-all routes.
+    1. **Stage 1 (Frontend Builder):** Node.js container runs `npm ci && npm run build` to output `frontend/dist`.
+    2. **Stage 2 (FastAPI Production Server):** Python 3.12 container installs `requirements.txt`, copies `frontend/dist` and `frontend/public`, mounts static assets via FastAPI `StaticFiles`, and serves the SPA index on catch-all routes.
     - Deploys as a single Cloud Run service on port `$PORT` with **zero CORS issues**.
+  - Detailed local execution runbook documented in `README.md`.
 - **9.3. Demo Presentation Runbook (3-Minute Script)**
   1. **Minute 1: Citizen Snap & Speak Intake**
      - Upload waterlogged road photo with Hinglish voice note.

@@ -29,23 +29,29 @@ async def test_kpi_summary_endpoint():
 @pytest.mark.asyncio
 async def test_work_order_generation():
     """Verify Gemini AI one-click field work order dispatch generation."""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        # Create an incident to dispatch
-        req = {
-            "title": "Collapsing Culvert & Waterlogging",
-            "description_standardized_en": "Culvert collapsed causing street flood near Indiranagar 100ft road.",
-            "category": "Roads & Footpaths",
-            "priority": "P0_CRITICAL",
-            "agency": "ULB_MUNICIPAL",
-            "ward_id": "Ward 14 - Indiranagar",
-            "lat": 12.9716,
-            "lng": 77.6412,
-        }
-        res_create = await ac.post("/api/intake/submit", json=req)
-        assert res_create.status_code == 200
-        inc_id = res_create.json()["master_incident_id"]
+    from backend.storage.json_store import get_repository
+    repo = get_repository()
+    inc_data = {
+        "incident_id": "CS-TEST-WO-1",
+        "title": "Collapsing Culvert & Waterlogging",
+        "description_standardized_en": "Culvert collapsed causing street flood near Indiranagar 100ft road.",
+        "category": "Roads & Footpaths",
+        "priority": "P0_CRITICAL",
+        "agency": "ULB_MUNICIPAL",
+        "ward_id": "Ward 14 - Indiranagar",
+        "location": {"lat": 12.9716, "lng": 77.6412, "landmark": "Indiranagar 100ft Road"},
+        "status": "REPORTED",
+        "community_impact_score": 1,
+        "citizen_report_ids": ["CR-1"],
+        "created_at": "2026-11-21T10:00:00Z",
+        "updated_at": "2026-11-21T10:00:00Z",
+        "sla_deadline": "2026-11-21T14:00:00Z",
+        "escalation_tier": "LEVEL_1_WARD_JE",
+    }
+    await repo.create_incident(inc_data)
 
-        # Mock gemini structured output
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        inc_id = "CS-TEST-WO-1"
         with patch.object(gemini_client, "generate_structured", new_callable=AsyncMock) as mock_gemini:
             mock_gemini.return_value = WorkOrderResponse(
                 incident_id=inc_id,
@@ -67,21 +73,29 @@ async def test_work_order_generation():
 @pytest.mark.asyncio
 async def test_admin_incident_override():
     """Verify human-in-the-loop supervisor override endpoint adjusts priority, agency, and ward."""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        req = {
-            "title": "Unlit Junction",
-            "description_standardized_en": "Dark junction due to non-functioning lamps.",
-            "category": "Electricity & Lighting",
-            "priority": "P2_MEDIUM",
-            "agency": "DISCOM_ELECTRICAL",
-            "ward_id": "Ward 14 - Indiranagar",
-            "lat": 12.9730,
-            "lng": 77.6420,
-        }
-        res_create = await ac.post("/api/intake/submit", json=req)
-        inc_id = res_create.json()["master_incident_id"]
+    from backend.storage.json_store import get_repository
+    repo = get_repository()
+    inc_data = {
+        "incident_id": "CS-TEST-OVR-1",
+        "title": "Unlit Junction",
+        "description_standardized_en": "Dark junction due to non-functioning lamps.",
+        "category": "Electricity & Lighting",
+        "priority": "P2_MEDIUM",
+        "agency": "DISCOM_ELECTRICAL",
+        "ward_id": "Ward 14 - Indiranagar",
+        "location": {"lat": 12.9730, "lng": 77.6420, "landmark": "12th Main Junction"},
+        "status": "REPORTED",
+        "community_impact_score": 1,
+        "citizen_report_ids": ["CR-2"],
+        "created_at": "2026-11-21T10:00:00Z",
+        "updated_at": "2026-11-21T10:00:00Z",
+        "sla_deadline": "2026-11-23T10:00:00Z",
+        "escalation_tier": "LEVEL_1_WARD_JE",
+    }
+    await repo.create_incident(inc_data)
 
-        # Apply supervisor override to escalate to P0_CRITICAL and re-route to ULB_MUNICIPAL
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        inc_id = "CS-TEST-OVR-1"
         override_payload = {
             "priority": "P0_CRITICAL",
             "agency": "ULB_MUNICIPAL",
