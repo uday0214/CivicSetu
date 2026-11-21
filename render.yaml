@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: civicsetu
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: DATA_STORE_MODE
+        value: sqlite
+      - key: DEMO_FALLBACK_ON_QUOTA
+        value: "true"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
