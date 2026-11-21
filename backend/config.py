@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     
     # OpenRouter API Fallback Configuration
     OPENROUTER_API_KEY: str = ""
-    OPENROUTER_MODEL: str = "google/gemini-2.5-flash"
+    OPENROUTER_MODEL: str = "particle-ai/particle-1:free"
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
     
     # Persistence Mode: "sqlite" (default local), "memory" (json), or "firestore" (GCP production)
