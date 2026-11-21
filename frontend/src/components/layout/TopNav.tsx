@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowUpRight, LogOut, LogIn } from 'lucide-react';
 import { AuthUser } from '../../types/api';
+import { CivicSetuLogo } from '../common/CivicSetuLogo';
 
 interface TopNavProps {
   currentUser: AuthUser | null;
@@ -24,12 +25,9 @@ export const TopNav: React.FC<TopNavProps> = ({
 }) => {
   return (
     <header className="h-16 bg-white text-neutral-950 border-b border-neutral-900 px-6 sm:px-12 flex items-center justify-between sticky top-0 z-50 select-none">
-      {/* Left: Brand // CivicSetu */}
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-base tracking-tight text-neutral-400 font-bold">//</span>
-        <span className="font-black text-xl tracking-tight text-neutral-950 font-sans">
-          CivicSetu
-        </span>
+      {/* Left: Brand // CivicSetu Logo */}
+      <div className="flex items-center gap-2 cursor-pointer" onClick={() => onTabChange?.('report')}>
+        <CivicSetuLogo size={36} />
       </div>
 
       {/* Center: Clean Navigation Links */}

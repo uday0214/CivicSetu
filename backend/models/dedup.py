@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from backend.models.enums import PriorityTier, IndianAgency, CivicCategory, IncidentStatus
 from backend.models.schemas import MasterIncident, CitizenReport, ExplainableTriageTrace
 from backend.services.geo_office_service import GoverningOfficeInfo
+from backend.services.responsible_ward_service import ResponsibleWardInfo
 
 
 class DedupCandidateSummary(BaseModel):
@@ -79,3 +80,4 @@ class ReportSubmissionResponse(BaseModel):
     message_to_citizen: str
     master_incident: MasterIncident
     nearest_governing_office: Optional[GoverningOfficeInfo] = None
+    responsible_ward: Optional[ResponsibleWardInfo] = None

@@ -163,6 +163,21 @@ export interface GoverningOffice {
   maps_url?: string | null;
 }
 
+export interface ResponsibleWard {
+  ward_id: string;
+  ward_name: string;
+  zone: string;
+  city: string;
+  state: string;
+  office_address: string;
+  lat: number;
+  lng: number;
+  phone: string;
+  officer_in_charge: string;
+  distance_km?: number | null;
+  maps_url?: string | null;
+}
+
 export interface IntakeSubmissionResult {
   photo_url?: string | null;
   audio_url?: string | null;
@@ -172,6 +187,7 @@ export interface IntakeSubmissionResult {
   lng?: number | null;
   landmark?: string | null;
   nearest_governing_office?: GoverningOffice | null;
+  responsible_ward?: ResponsibleWard | null;
 }
 
 export interface DedupComparisonResponse {
@@ -233,6 +249,7 @@ export interface ReportSubmissionResponse {
   message_to_citizen: string;
   master_incident: MasterIncident;
   nearest_governing_office?: GoverningOffice | null;
+  responsible_ward?: ResponsibleWard | null;
 }
 
 export interface ResolutionSubmitResult {

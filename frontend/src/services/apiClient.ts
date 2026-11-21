@@ -19,6 +19,7 @@ import {
   AssetRecord,
   AssetStats,
   GoverningOffice,
+  ResponsibleWard,
 } from '../types/api';
 
 const API_BASE = '/api';
@@ -160,6 +161,16 @@ export const apiClient = {
     const res = await fetch(`${API_BASE}/intake/nearest-office?${params.toString()}`);
     if (!res.ok) {
       throw new Error('Failed to find nearest governing office');
+    }
+    return res.json();
+  },
+
+  async getResponsibleWard(lat: number, lng: number, wardId?: string): Promise<ResponsibleWard> {
+    const params = new URLSearchParams({ lat: lat.toString(), lng: lng.toString() });
+    if (wardId) params.append('ward_id', wardId);
+    const res = await fetch(`${API_BASE}/intake/responsible-ward?${params.toString()}`);
+    if (!res.ok) {
+      throw new Error('Failed to determine responsible ward');
     }
     return res.json();
   },

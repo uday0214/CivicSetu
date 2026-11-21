@@ -18,6 +18,7 @@ from backend.models.dedup import (
     ReportSubmissionResponse,
 )
 from backend.services.geo_office_service import find_nearest_governing_office
+from backend.services.responsible_ward_service import find_responsible_ward_for_location
 from backend.services.gemini_client import gemini_client
 from backend.storage.json_store import get_repository
 
@@ -361,6 +362,11 @@ async def process_report_submission(req: ReportSubmissionRequest) -> ReportSubmi
         msg = f"Issue already tracked! You are supporter #{new_score}.{escalation_notice}"
 
         nearest_office = find_nearest_governing_office(lat=req.lat, lng=req.lng)
+        responsible_ward = find_responsible_ward_for_location(
+            lat=req.lat,
+            lng=req.lng,
+            preferred_ward_id=req.ward_id,
+        )
 
         return ReportSubmissionResponse(
             is_duplicate=True,
@@ -373,6 +379,7 @@ async def process_report_submission(req: ReportSubmissionRequest) -> ReportSubmi
             message_to_citizen=msg,
             master_incident=incident,
             nearest_governing_office=nearest_office,
+            responsible_ward=responsible_ward,
         )
 
     else:
@@ -428,6 +435,11 @@ async def process_report_submission(req: ReportSubmissionRequest) -> ReportSubmi
         await repo.add_citizen_report(citizen_report.model_dump())
 
         nearest_office = find_nearest_governing_office(lat=req.lat, lng=req.lng)
+        responsible_ward = find_responsible_ward_for_location(
+            lat=req.lat,
+            lng=req.lng,
+            preferred_ward_id=req.ward_id,
+        )
 
         return ReportSubmissionResponse(
             is_duplicate=False,
@@ -440,4 +452,5 @@ async def process_report_submission(req: ReportSubmissionRequest) -> ReportSubmi
             message_to_citizen="Your report has been registered as a new Master Incident.",
             master_incident=new_incident,
             nearest_governing_office=nearest_office,
+            responsible_ward=responsible_ward,
         )

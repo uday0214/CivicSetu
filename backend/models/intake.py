@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, model_validator
 from backend.models.enums import PriorityTier, IndianAgency, CivicCategory
 from backend.models.schemas import ExplainableTriageTrace
 from backend.services.geo_office_service import GoverningOfficeInfo
+from backend.services.responsible_ward_service import ResponsibleWardInfo
 
 
 class IntakeTriageResponse(BaseModel):
@@ -155,3 +156,4 @@ class IntakeSubmissionResult(BaseModel):
     lng: Optional[float] = None
     landmark: Optional[str] = None
     nearest_governing_office: Optional[GoverningOfficeInfo] = None
+    responsible_ward: Optional[ResponsibleWardInfo] = None

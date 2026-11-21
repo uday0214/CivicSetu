@@ -28,6 +28,7 @@ import {
   ReportSubmissionRequest,
   ReportSubmissionResponse,
   GoverningOffice,
+  ResponsibleWard,
   CIVIC_CATEGORIES,
   PRIORITY_TIERS,
 } from '../../types/api';
@@ -89,6 +90,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
   const [lng, setLng] = useState<number>(77.6412);
   const [landmark, setLandmark] = useState<string>('100 Feet Road, Indiranagar, Bengaluru');
   const [nearestOffice, setNearestOffice] = useState<GoverningOffice | null>(null);
+  const [responsibleWard, setResponsibleWard] = useState<ResponsibleWard | null>(null);
   const [isLoadingOffice, setIsLoadingOffice] = useState<boolean>(false);
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [locationStatus, setLocationStatus] = useState<{
@@ -96,24 +98,31 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
     message: string;
   } | null>(null);
 
-  // Auto fetch nearest governing office whenever lat/lng changes
+  // Auto fetch responsible ward & governing office whenever lat/lng changes
   useEffect(() => {
     let isCurrent = true;
-    const fetchOffice = async () => {
+    const fetchWardAndOffice = async () => {
       setIsLoadingOffice(true);
       try {
-        const office = await apiClient.getNearestOffice(lat, lng);
+        const [office, ward] = await Promise.all([
+          apiClient.getNearestOffice(lat, lng),
+          apiClient.getResponsibleWard(lat, lng),
+        ]);
         if (isCurrent) {
           setNearestOffice(office);
+          setResponsibleWard(ward);
+          if (ward?.ward_id) {
+            setEditableWard(ward.ward_id);
+          }
         }
       } catch (err) {
-        console.warn('Could not fetch nearest governing office:', err);
+        console.warn('Could not fetch responsible ward / office:', err);
       } finally {
         if (isCurrent) setIsLoadingOffice(false);
       }
     };
 
-    fetchOffice();
+    fetchWardAndOffice();
     return () => {
       isCurrent = false;
     };
@@ -139,6 +148,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
   const [duplicateMatch, setDuplicateMatch] = useState<DedupCheckResult | null>(null);
   const [submissionFeedback, setSubmissionFeedback] = useState<string | null>(null);
   const [submittedOffice, setSubmittedOffice] = useState<GoverningOffice | null>(null);
+  const [submittedWard, setSubmittedWard] = useState<ResponsibleWard | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
@@ -598,6 +608,11 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
       } else if (nearestOffice) {
         setSubmittedOffice(nearestOffice);
       }
+      if (result.responsible_ward) {
+        setSubmittedWard(result.responsible_ward);
+      } else if (responsibleWard) {
+        setSubmittedWard(responsibleWard);
+      }
       onReportSubmitted(result);
 
       // Reset media inputs
@@ -826,25 +841,54 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
           </div>
         </div>
 
-        {/* Live Closest Governing Municipal Office Display */}
-        <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-200 space-y-1">
+        {/* Responsible Ward & Municipal Jurisdiction Display */}
+        <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-300 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-500 font-bold flex items-center gap-1.5">
-              <MapPin className="w-3 h-3 text-neutral-800" />
-              Nearest Governing Authority
+            <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-900 font-black flex items-center gap-1.5">
+              <Building className="w-3.5 h-3.5 text-neutral-900" />
+              Responsible Ward Jurisdiction
             </span>
             {isLoadingOffice ? (
               <span className="text-[10px] text-neutral-500 font-mono flex items-center gap-1">
-                <Loader2 className="w-2.5 h-2.5 animate-spin" /> Calculating...
+                <Loader2 className="w-2.5 h-2.5 animate-spin" /> Identifying Ward...
               </span>
-            ) : nearestOffice?.distance_km !== undefined ? (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-                {nearestOffice.distance_km} km away
+            ) : responsibleWard?.distance_km !== undefined ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-900 text-white font-bold">
+                {responsibleWard.distance_km} km to Ward Office
               </span>
             ) : null}
           </div>
 
-          {nearestOffice && (
+          {responsibleWard ? (
+            <div className="space-y-1">
+              <div className="text-xs font-black text-neutral-950">
+                {responsibleWard.ward_name}
+              </div>
+              <div className="text-[11px] text-neutral-700 font-medium">
+                {responsibleWard.office_address}
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-200 text-[11px]">
+                <div className="flex items-center gap-2 text-neutral-700 font-mono text-[10px]">
+                  <Phone className="w-3 h-3 text-neutral-600" />
+                  <span className="font-bold">{responsibleWard.phone}</span>
+                  <span>•</span>
+                  <span>{responsibleWard.officer_in_charge}</span>
+                </div>
+                {responsibleWard.maps_url && (
+                  <a
+                    href={responsibleWard.maps_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-950 hover:underline"
+                  >
+                    <MapPin className="w-3 h-3 text-rose-600" />
+                    <span>Ward Office Map</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                )}
+              </div>
+            </div>
+          ) : nearestOffice ? (
             <div className="pt-0.5">
               <div className="text-xs font-bold text-neutral-900 leading-snug">
                 {nearestOffice.name}
@@ -858,7 +902,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
                 <span className="font-semibold text-neutral-700">{nearestOffice.state}</span>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Coordinate indicators & drag hint */}
@@ -1052,8 +1096,52 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
               </div>
             </div>
 
-            {/* Nearest Governing Office Preview in AI Triage details */}
-            {nearestOffice && (
+            {/* Responsible Ward & Governing Office Preview in AI Triage details */}
+            {responsibleWard ? (
+              <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-300 space-y-2 mt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-900 font-black flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5 text-neutral-900" />
+                    Responsible Ward Jurisdiction
+                  </span>
+                  {responsibleWard.distance_km !== undefined && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-900 text-white font-bold">
+                      {responsibleWard.distance_km} km away
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <div className="text-xs font-black text-neutral-950">
+                    {responsibleWard.ward_name}
+                  </div>
+                  <div className="text-[11px] text-neutral-700 leading-snug mt-0.5 font-medium">
+                    {responsibleWard.office_address}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-neutral-200 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-neutral-700 font-mono text-[10px]">
+                    <Phone className="w-3 h-3 text-neutral-500" />
+                    <span className="font-bold">{responsibleWard.phone}</span>
+                    <span>•</span>
+                    <span>{responsibleWard.officer_in_charge}</span>
+                  </div>
+                  {responsibleWard.maps_url && (
+                    <a
+                      href={responsibleWard.maps_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-950 hover:underline"
+                    >
+                      <MapPin className="w-3 h-3 text-rose-600" />
+                      <span>Ward Office Map</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : nearestOffice ? (
               <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200 space-y-2 mt-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-600 font-bold flex items-center gap-1.5">
@@ -1095,7 +1183,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
                   )}
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
 
           <button
@@ -1126,7 +1214,52 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
             <span className="text-sm font-black tracking-tight">{submissionFeedback}</span>
           </div>
 
-          {submittedOffice && (
+          {submittedWard ? (
+            <div className="pt-2 border-t border-neutral-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-900 font-black flex items-center gap-1.5">
+                  <Building className="w-3.5 h-3.5 text-neutral-900" />
+                  Responsible Ward Jurisdiction
+                </span>
+                {submittedWard.distance_km !== undefined && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-900 text-white font-bold">
+                    {submittedWard.distance_km} km to Ward Office
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <h4 className="text-xs font-black text-neutral-950">
+                  {submittedWard.ward_name}
+                </h4>
+                <p className="text-[11px] text-neutral-700 mt-0.5 font-medium">
+                  {submittedWard.office_address}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100 text-xs">
+                <div className="flex items-center gap-1.5 text-neutral-700 font-mono text-[11px]">
+                  <Phone className="w-3.5 h-3.5 text-neutral-500" />
+                  <span className="font-bold">{submittedWard.phone}</span>
+                  <span className="text-neutral-400">•</span>
+                  <span>{submittedWard.officer_in_charge}</span>
+                </div>
+
+                {submittedWard.maps_url && (
+                  <a
+                    href={submittedWard.maps_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-950 hover:text-black bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 px-3 py-1.5 rounded-full transition active:translate-y-0.5"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-rose-600" />
+                    <span>View Ward on Google Maps</span>
+                    <ExternalLink className="w-3 h-3 text-neutral-500" />
+                  </a>
+                )}
+              </div>
+            </div>
+          ) : submittedOffice ? (
             <div className="pt-2 border-t border-neutral-100 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-500 font-bold flex items-center gap-1.5">
@@ -1169,7 +1302,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
                 )}
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       )}
 

@@ -16,6 +16,10 @@ from backend.services.geo_office_service import (
     GoverningOfficeInfo,
     GOVERNING_OFFICES,
 )
+from backend.services.responsible_ward_service import (
+    find_responsible_ward_for_location,
+    ResponsibleWardInfo,
+)
 from backend.models.dedup import (
     DedupCheckRequest,
     DedupCheckResult,
@@ -99,8 +103,14 @@ async def triage_citizen_report(
     )
 
     nearest_office = None
+    responsible_ward = None
     if lat is not None and lng is not None:
         nearest_office = find_nearest_governing_office(lat=lat, lng=lng)
+        responsible_ward = find_responsible_ward_for_location(
+            lat=lat,
+            lng=lng,
+            preferred_ward_id=triage_result.ward_id if triage_result else None,
+        )
 
     return IntakeSubmissionResult(
         photo_url=photo_url,
@@ -111,7 +121,22 @@ async def triage_citizen_report(
         lng=lng,
         landmark=landmark,
         nearest_governing_office=nearest_office,
+        responsible_ward=responsible_ward,
     )
+
+
+@router.get("/responsible-ward", response_model=ResponsibleWardInfo)
+async def get_responsible_ward_endpoint(
+    lat: float,
+    lng: float,
+    ward_id: Optional[str] = None,
+):
+    """
+    Finds the exact responsible municipal Ward / Circle jurisdiction for the given GPS coordinates.
+    Returns official ward office address, contact phone, officer designation, and Google Maps link.
+    """
+    ward = find_responsible_ward_for_location(lat=lat, lng=lng, preferred_ward_id=ward_id)
+    return ward
 
 
 @router.get("/nearest-office", response_model=GoverningOfficeInfo)

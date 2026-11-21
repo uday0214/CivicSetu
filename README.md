@@ -1,135 +1,228 @@
-# CivicSetu (सिविक सेतु) — CivicResolve for Indian Cities
+# CivicSetu — AI-Powered Civic Issue Resolution for Indian Cities
+*Built for PromptWars (CivicResolve Challenge).*
 
-> **AI-Powered Multimodal Civic Issue Reporting, Spatial Deduplication & Municipal Governance Command Platform**  
-> Built for the PromptWars Hackathon with Google Gemini 2.5 Flash.
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
+[![React 18](https://img.shields.io/badge/React-18.3-61DAFB.svg)](https://react.dev/)
+[![Gemini 2.5](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4.svg)](https://ai.google.dev/)
 
----
+> **Live Deployment:** `[LIVE_DEMO_URL]`  
+> *(Note: Use the top-navigation `Admin Portal ↗` and `Report Issue` buttons to switch between citizen reporting and the municipal command center instantly).*
 
-## 🏛️ Platform Highlights
-
-1. **Multilingual "Snap & Speak" Citizen Intake**:
-   - Accepts photos, voice notes (Kannada, Hindi, Hinglish, English), and raw text.
-   - Extracts GPS from camera EXIF *before* browser compression.
-   - Unified Gemini 2.5 single-call structured triage extracting severity, category, responsible agency, and vernacular reassuring feedback.
-   - Intelligent sanity gate rejecting non-civic media (selfies, memes, blur).
-
-2. **Spatial-Semantic Deduplication**:
-   - Clusters nearby reports (within 50m) matching the same civic failure.
-   - Merges redundant tickets into a single canonical Master Incident.
-   - Escalates community impact score and priority instead of spamming engineers.
-
-3. **Closed-Loop AI Resolution Audit**:
-   - Contractors submit repair proof photo.
-   - Gemini compares Before vs After imagery across geometry, landmarks, and materials.
-   - Prevents contractor fraud: authentic repairs trigger `VERIFIED_FIXED` (96%+ confidence); bogus or unrelated photos trigger `REJECTED_MISMATCH`.
-   - Starts strict 48-hour citizen review window.
-
-4. **Municipal Admin Command Center**:
-   - Real-time operational KPI strip (P0 Critical, SLA Overdue, Level 3 Escalations).
-   - Split-screen Leaflet GIS map with custom SVG priority pins and density hotspots.
-   - Filterable triage queue by Ward, Priority, and Indian Agency (`BBMP`, `BESCOM`, `BWSSB`, `PWD`, `NHAI`).
-   - One-click Gemini AI Field Work Order Generator.
-   - Systemic Infrastructure Pattern Synthesis.
+CivicSetu is an end-to-end civic resolution platform engineered for Indian urban local bodies across Karnataka, Telangana, Andhra Pradesh, and Tamil Nadu. It ingests code-mixed voice notes and photos from citizens, performs Gemini-powered multimodal triage and 100-meter spatial-semantic deduplication, maps the defect directly to the responsible local ward office with navigation links, and enforces verified visual resolution audits prior to ticket closure.
 
 ---
 
-## 🚀 How to Run the Website Locally
+## 1. The Problem (Indian Civic Context)
 
-You have **three simple ways** to run CivicSetu locally.
+Indian municipal infrastructure management faces structural breakdowns across the defect lifecycle:
+
+* **Reporting Friction & Language Barriers:** Standard government portals demand complex form fields, manual ward selection, and formal English descriptions, alienating citizens speaking Kannada, Telugu, Tamil, or Hinglish.
+* **Jurisdictional Fragmentation:** Road craters, leaking mains, and dangling wires trigger inter-agency finger-pointing among Urban Local Bodies (BBMP, GHMC, GCC), State PWDs, NHAI, Electricity DISCOMs (BESCOM, TGSPDCL), and Water Boards (BWSSB, HMWSSB).
+* **Duplicate Flooding:** High-visibility defects generate dozens of repetitive complaints, overwhelming ward engineers with redundant tickets and obscuring genuine emergency escalations.
+* **Unverified Closures:** Contractors routinely mark tickets resolved without physical evidence or upload unrelated photos to clear SLA metrics, eroding citizen confidence.
+
+---
+
+## 2. Feature Matrix & Problem Statement Alignment
+
+| CivicResolve Requirement | CivicSetu Implementation | Key Technical Differentiator |
+| :--- | :--- | :--- |
+| **Citizen Reporting** | Multi-modal zero-fatigue intake via camera photo, audio voice note, and raw text. | Client EXIF GPS extraction with automatic fallback to network triangulation. |
+| **AI Classification** | Multimodal Gemini 2.5 Flash pipeline classifying category, priority, and physical hazards. | Pre-submission visual sanity gate rejecting non-civic media (memes, selfies, indoor blur). |
+| **Priority Detection** | Deterministic P0–P3 prioritization with monsoon multipliers and vulnerability proximity flags. | Active school/hospital proximity awareness and severe weather escalation. |
+| **Department Routing** | Jurisdiction mapper routing to Municipal ULBs, State PWD, NHAI, DISCOMs, or Water Boards. | GPS-based mapping of responsible Ward/Circle offices, contact helplines, and Google Maps pins. |
+| **Issue Deduplication** | Two-tier spatial-semantic engine grouping reports within a 100-meter radius. | Gemini verification merging duplicates into Master Incidents with Community Impact score increments. |
+| **Admin Command Center** | Geospatial Leaflet operations map, SLA countdown tickers, and AI briefing generator. | One-click human-in-the-loop dispatch to departments with automatic state transition to `IN_PROGRESS`. |
+| **Resolution Verification** | Dual-image Before/After visual comparison audit with strict confidence scoring. | Automated mismatch rejection and a 48-hour citizen reopening window. |
+
+---
+
+## 3. How Google Gemini & Google Antigravity Power CivicSetu
+
+### Google Gemini (`google-genai` SDK)
+CivicSetu leverages the official Google GenAI SDK (`google-genai>=1.0.0`) running `gemini-2.5-flash` with strict Pydantic `response_schema` enforcement:
+1. **Multimodal Intake Triage:** Combines image bytes, audio notes, and vernacular descriptions into a single round-trip call. It generates standardized English titles and descriptions, extracts physical landmarks, identifies the vernacular language, and outputs a polite local-language acknowledgement.
+2. **Spatial-Semantic Deduplication:** When a report falls within 100 meters of an active ticket, Gemini compares the defects to determine whether they represent the identical physical asset failure.
+3. **Dual-Image Resolution Audit:** Analyzes contractor post-repair photos side-by-side with original defect photos to verify genuine structural repair before closing the SLA ticket.
+4. **Systemic Pattern Synthesis:** Synthesizes cross-ward incident telemetry to generate actionable infrastructure briefings for municipal commissioners.
+
+### Google Antigravity
+CivicSetu was architected, scaffolded, and hardened using Google Antigravity. Antigravity enabled rapid end-to-end iteration across FastAPI schemas, Leaflet GIS rendering, Pydantic type safety, and automated test suites within the hackathon timeframe.
+
+---
+
+## 4. System Architecture
+
+```mermaid
+flowchart LR
+    A["Citizen & Admin (React 18 SPA)"] -->|REST API & Multipart Form| B["FastAPI Backend (Port 8000)"]
+    B -->|Multimodal Triage & Verification| C["Google Gemini 2.5 Flash API"]
+    B -->|100m Spatial Query| D["Haversine Deduplication Engine"]
+    B -->|GPS Jurisdiction Lookup| E["Responsible Ward Service"]
+    B -->|Dual Storage Adapter| F["Local SQLite / Memory & Media Store"]
+```
+
+### Verified Tech Stack
+| Component | Technology | Version |
+| :--- | :--- | :--- |
+| **Backend Runtime** | Python | 3.12 / 3.14 |
+| **API Framework** | FastAPI | >= 0.115.0 |
+| **AI SDK** | google-genai | >= 1.0.0 |
+| **Schema Validation** | Pydantic v2 | >= 2.10.0 |
+| **Frontend Framework** | React + TypeScript + Vite | React 18.3, Vite 5.4 |
+| **Mapping & GIS** | Leaflet + React-Leaflet | 1.9.4 |
+| **Icons & Styling** | Tailwind CSS + Lucide React | Tailwind 3.4 |
+
+---
+
+## 5. End-to-End Walkthrough
+
+### Citizen View
+* **Snap & Speak Intake:** Citizens capture a photo or record a voice note in Kannada, Telugu, Tamil, Hindi, or English. EXIF metadata extracts GPS coordinates automatically.
+* **Responsible Ward Identification:** The application displays the responsible local municipal ward (e.g., *Ward 14 - Indiranagar (BBMP East)* or *Circle 20 - Serilingampally (GHMC)*) alongside the ward office address, phone number, and a direct Google Maps navigation link.
+* **Community Duplicate Support:** If an issue is already reported within 100m, the citizen can upvote the existing ticket, boosting the community impact score and escalating its priority.
+* **Resolution Verification & Reopen:** Citizens view Before and After photos side-by-side with the AI audit confidence score and can reopen rejected repairs within 48 hours.
+
+### Admin Command Center
+* **Operational KPI Strip:** Live counters show total active incidents, P0 critical hazards, SLA-overdue tickets, and verified resolution rates.
+* **Geospatial Command Map:** Leaflet map displays priority-colored pins across southern municipal zones with quick-jump filters for Karnataka, Telangana, Andhra Pradesh, and Tamil Nadu.
+* **Explainable AI Triage Drawer:** Displays the full AI hazard breakdown, monsoon impact flags, statutory jurisdiction rationales, and an editable human-in-the-loop override form.
+* **One-Click Department Dispatch:** Allows administrators to generate a structured AI work order and transition the defect to `IN_PROGRESS` with a single click.
+
+---
+
+## 6. API Endpoints Overview
+
+| Method | Endpoint | Purpose |
+| :--- | :--- | :--- |
+| `POST` | `/api/intake/triage` | Multimodal intake accepting photo, audio voice note, text, and GPS coordinates. |
+| `GET` | `/api/intake/responsible-ward` | Finds responsible local municipal Ward/Circle office, phone, and Google Maps pin. |
+| `GET` | `/api/intake/nearest-office` | Calculates closest administrative municipal office using Haversine distance. |
+| `POST` | `/api/intake/check-duplicate` | Evaluates nearby tickets within 100m for spatial and semantic duplication. |
+| `POST` | `/api/intake/submit` | Finalizes report, increments community impact score, or registers a new Master Incident. |
+| `GET` | `/api/incidents` | Lists all active master incidents with optional ward, agency, status, and priority filters. |
+| `GET` | `/api/incidents/{incident_id}` | Retrieves complete incident details, citizen reports, and explainable AI trace. |
+| `PATCH` | `/api/incidents/{id}/override` | Admin human-in-the-loop override for priority, agency, status, or ward assignment. |
+| `POST` | `/api/incidents/{id}/work-order` | Generates a structured field crew work order using Gemini. |
+| `POST` | `/api/incidents/{id}/resolve` | Submits contractor repair photo and triggers Before/After visual verification audit. |
+| `POST` | `/api/incidents/{id}/reopen` | Allows citizens to contest invalid closures within the 48-hour SLA window. |
+| `GET` | `/api/analytics/kpi-summary` | Aggregates real-time municipal resolution metrics, P0 counts, and overdue tickets. |
+| `POST` | `/api/analytics/systemic-briefing` | Generates an executive briefing identifying cross-ward civic failure clusters. |
+| `POST` | `/api/auth/login` | Authenticates citizen or admin credentials and returns session tokens. |
+| `POST` | `/api/seed/reset` | Resets repository state with 20 realistic multi-state seed incidents. |
+
+---
+
+## 7. Local Development Setup
 
 ### Prerequisites
-- Python 3.11+ or 3.12+
-- Node.js 18+ (with npm)
-- *(Optional)* Gemini API Key (`GEMINI_API_KEY`) from [Google AI Studio](https://aistudio.google.com).  
-  *Note:* The system includes a built-in demo circuit breaker fallback that runs flawlessly even without an API key!
+* Python 3.12+
+* Node.js 18+ and npm
+* Google AI Studio Gemini API Key
 
----
-
-### Option 1: Fast Local Development (Recommended)
-
-Run backend and frontend in separate terminals:
-
-#### Terminal 1 — Backend (FastAPI)
+### Installation Steps
 ```bash
-# 1. Activate python virtual environment
+# 1. Clone the repository
+git clone https://github.com/uday0214/CivicSetu.git
+cd CivicSetu
+
+# 2. Configure environment variables
+cp .env.example .env
+# Edit .env and supply your GEMINI_API_KEY
+
+# 3. Backend setup
+python3 -m venv .venv
 source .venv/bin/activate
+pip install -r backend/requirements.txt
 
-# 2. (Optional) Set your Gemini API key
-export GEMINI_API_KEY="your-api-key-here"
-
-# 3. Seed realistic Bengaluru BBMP demo data (16 rich cases)
-python -m backend.seed
-
-# 4. Start FastAPI server with live reload on port 8000
-uvicorn backend.main:app --port 8000 --reload
-```
-*Backend runs at:* `http://localhost:8000` (API Docs at `http://localhost:8000/docs`)
-
-#### Terminal 2 — Frontend (Vite + React)
-```bash
-# 1. Enter frontend folder and start dev server
+# 4. Frontend setup
 cd frontend
-npm run dev
-```
-*Frontend runs at:* `http://localhost:5173` (with instant HMR)
+npm install
+npm run build
+cd ..
 
----
+# 5. Run tests
+pytest -v
 
-### Option 2: Unified Single-Process Mode
-
-Build the frontend once and let FastAPI serve both the API and the static React SPA on port 8000:
-
-```bash
-# 1. Build frontend distribution
-cd frontend && npm run build && cd ..
-
-# 2. Run backend
-source .venv/bin/activate
+# 6. Start the server
 uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
-Open **`http://localhost:8000`** in your browser.
+Open `http://localhost:8000` in your browser.
+
+### Environment Variables
+| Variable | Required | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `GEMINI_API_KEY` | Yes | — | Google AI Studio API key for Gemini 2.5 Flash. |
+| `GEMINI_MODEL` | No | `gemini-2.5-flash` | Pinned Gemini model identifier. |
+| `DATA_STORE_MODE` | No | `memory` | `memory` (local dev) or `firestore` (GCP deployment). |
+| `PORT` | No | `8000` | HTTP server port. |
+| `GOOGLE_CLOUD_PROJECT`| No | `civicsetu-demo` | GCP project ID (for Cloud Run/Firestore). |
+| `GCS_BUCKET` | No | `civicsetu-media-us-central1` | Cloud Storage bucket for uploaded media. |
 
 ---
 
-### Option 3: Production Docker Container (Cloud Run Ready)
+## 8. Google Cloud Deployment (Single-Container Architecture)
 
-Build and run the turnkey multi-stage container:
+CivicSetu is containerized as a single multi-stage Docker container that builds the React application and serves both the static UI and FastAPI REST endpoints on port 8000.
 
+### Build and Deploy to Cloud Run
 ```bash
-# 1. Build Docker image
-docker build -t civicsetu .
+# Authenticate with Google Cloud
+gcloud auth login
+gcloud config set project YOUR_GCP_PROJECT_ID
 
-# 2. Run container
-docker run -p 8000:8000 -e GEMINI_API_KEY="your-api-key" civicsetu
-```
-Open **`http://localhost:8000`**.
+# Build container using Google Cloud Build
+gcloud builds submit --tag gcr.io/YOUR_GCP_PROJECT_ID/civicsetu:latest .
 
----
-
-## 🧪 Verification & Test Suite
-
-Run the full automated test suite (38 unit & integration tests):
-
-```bash
-# Run all pytest suites
-.venv/bin/pytest -v
-
-# Run frontend TypeScript & production build check
-cd frontend && npm run build
+# Deploy to Cloud Run (Always-Free Tier eligible)
+gcloud run deploy civicsetu \
+  --image gcr.io/YOUR_GCP_PROJECT_ID/civicsetu:latest \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars GEMINI_API_KEY=YOUR_GEMINI_KEY,DATA_STORE_MODE=memory
 ```
 
 ---
 
-## 📍 Interactive Demo Walkthrough
+## 9. Project Structure
 
-1. **Switch Roles**: Use the top-right toggle in the navigation bar to switch between **Citizen View** and **Admin View**.
-2. **Citizen Flow**:
-   - Tab 1: **Report**: Submit voice ("Indiranagar 100 feet road pe pothole hai"), photo, or text.
-   - Tab 2: **Nearby Feed**: View localized map pins and upvote existing issues.
-   - Tab 3: **My Reports**: Track status with timeline and view Before/After resolution proof cards.
-3. **Admin Flow**:
-   - Inspect the **Operational KPI Strip**.
-   - Click on `CS-BLR-1042` to inspect the **Level 3 Municipal Commissioner** escalation badge.
-   - Click ✨ **"Analyze Citywide Patterns"** to trigger Gemini systemic macro analysis.
-   - Click 🔧 **"Generate Work Order"** inside any ticket drawer for technical field briefs.
-   - Click **"Reset Demo Data"** anytime in the top bar to restore the pristine seed state.
+```text
+civicSetu/
+├── backend/
+│   ├── config.py                 # Pydantic environment settings
+│   ├── main.py                   # FastAPI initialization and static SPA mounting
+│   ├── models/                   # Canonical Pydantic schemas and Indian enums
+│   │   ├── dedup.py
+│   │   ├── enums.py
+│   │   ├── intake.py
+│   │   └── schemas.py
+│   ├── routes/                   # REST route handlers
+│   │   ├── analytics.py
+│   │   ├── auth.py
+│   │   ├── incidents.py
+│   │   └── intake.py
+│   ├── services/                 # Gemini clients and domain logic
+│   │   ├── audit_service.py
+│   │   ├── dedup_service.py
+│   │   ├── gemini_client.py
+│   │   ├── geo_office_service.py
+│   │   ├── intake_service.py
+│   │   └── responsible_ward_service.py
+│   └── storage/                  # SQLite, In-Memory, and Media adapters
+├── frontend/
+│   ├── src/
+│   │   ├── components/           # Citizen intake, Map, and Admin command components
+│   │   │   ├── admin/
+│   │   │   ├── citizen/
+│   │   │   └── common/
+│   │   ├── services/             # Type-safe API client
+│   │   ├── types/                # Snake_case TypeScript API contracts
+│   │   └── App.tsx               # Top-to-bottom citizen and admin flow
+│   ├── index.html
+│   └── package.json
+├── tests/                        # Comprehensive Pytest suite
+├── Dockerfile                    # Multi-stage production container
+└── pytest.ini
+```
