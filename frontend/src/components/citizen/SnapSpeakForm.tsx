@@ -61,9 +61,8 @@ const REGIONAL_PRESETS: RegionPreset[] = [
   { name: 'Beach Road (Vizag)', state: 'Andhra Pradesh', lat: 17.7145, lng: 83.3235, landmark: 'RK Beach Road, Pandurangapuram, Visakhapatnam, Andhra Pradesh' },
   { name: 'MG Road (Vijayawada)', state: 'Andhra Pradesh', lat: 16.5062, lng: 80.6480, landmark: 'Canal Road, Governorpet, Vijayawada, Andhra Pradesh' },
   { name: 'Tirupati (TMC)', state: 'Andhra Pradesh', lat: 13.6288, lng: 79.4192, landmark: 'Tilak Road, Tirupati, Andhra Pradesh' },
+  { name: 'Sri City (IIIT / Foxconn)', state: 'Andhra Pradesh', lat: 13.5550, lng: 80.0260, landmark: 'Palmera Road, Near IIIT Sri City, Tirupati District, Andhra Pradesh' },
 ];
-
-const BENGALURU_PRESETS = REGIONAL_PRESETS;
 
 interface SnapSpeakFormProps {
   onReportSubmitted: (result: ReportSubmissionResponse) => void;
@@ -156,11 +155,11 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
 
   // Reverse geocodes coordinates to street / area name
   const reverseGeocode = async (latitude: number, longitude: number) => {
-    // 1. Instant check against local presets
-    for (const p of BENGALURU_PRESETS) {
+    // 1. Instant check against regional presets
+    for (const p of REGIONAL_PRESETS) {
       const dLat = Math.abs(p.lat - latitude);
       const dLng = Math.abs(p.lng - longitude);
-      if (dLat < 0.012 && dLng < 0.012) {
+      if (dLat < 0.015 && dLng < 0.015) {
         setLandmark(p.landmark);
         return;
       }
@@ -169,7 +168,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
     // 2. Reverse geocode via OpenStreetMap Nominatim
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2500);
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
         { headers: { 'Accept': 'application/json' }, signal: controller.signal }
@@ -178,11 +177,10 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
       if (res.ok) {
         const data = await res.json();
         if (data.address) {
-          const parts = [
-            data.address.road || data.address.pedestrian || data.address.neighbourhood,
-            data.address.suburb || data.address.residential,
-            data.address.city || data.address.town || 'Bengaluru',
-          ].filter(Boolean);
+          const road = data.address.road || data.address.pedestrian || data.address.neighbourhood || data.address.suburb || data.address.industrial;
+          const locality = data.address.city || data.address.town || data.address.village || data.address.municipality || data.address.county || data.address.state_district;
+          const state = data.address.state;
+          const parts = [road, locality, state].filter(Boolean);
           if (parts.length > 0) {
             setLandmark(parts.join(', '));
             return;
@@ -191,10 +189,21 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
         if (data.display_name) {
           const shortName = data.display_name.split(',').slice(0, 3).join(', ');
           setLandmark(shortName);
+          return;
         }
       }
     } catch {
-      // Offline fallback: keep coordinates
+      // Offline / network fallback: use backend responsible ward info
+    }
+
+    // 3. Fallback to backend responsible ward jurisdiction for accurate localized landmark
+    try {
+      const ward = await apiClient.getResponsibleWard(latitude, longitude);
+      if (ward && ward.ward_name) {
+        setLandmark(`${ward.ward_name}, ${ward.city}, ${ward.state}`);
+      }
+    } catch {
+      setLandmark(`Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`);
     }
   };
 
@@ -204,7 +213,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
     if (!q) return;
 
     // Check presets first
-    const matched = BENGALURU_PRESETS.find(
+    const matched = REGIONAL_PRESETS.find(
       (p) => p.name.toLowerCase().includes(q) || p.landmark.toLowerCase().includes(q)
     );
     if (matched) {
@@ -220,12 +229,13 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
       return;
     }
 
-    // Search via OpenStreetMap
+    // Search via OpenStreetMap without hardcoding city
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const searchQuery = q.includes('india') ? query : `${query}, India`;
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Bengaluru')}&limit=1`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`,
         { headers: { 'Accept': 'application/json' }, signal: controller.signal }
       );
       clearTimeout(timeoutId);
@@ -236,6 +246,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
           const newLng = parseFloat(data[0].lon);
           setLat(newLat);
           setLng(newLng);
+          setLandmark(data[0].display_name.split(',').slice(0, 3).join(', '));
           setLocationStatus({ type: 'success', message: `📍 Positioned on map: ${data[0].display_name.split(',')[0]}` });
           if (leafletMapRef.current && markerRef.current) {
             leafletMapRef.current.setView([newLat, newLng], 16);

@@ -238,6 +238,18 @@ RESPONSIBLE_WARDS: List[Dict[str, Any]] = [
         "phone": "0877-2256767",
         "officer_in_charge": "Assistant Executive Engineer (TMC Central Circle)",
     },
+    {
+        "ward_id": "TMC Ward 12 - Sri City / Tada (Tirupati)",
+        "ward_name": "Ward 12 - Sri City / Tada (TMC / IALA)",
+        "zone": "Sri City IALA & Tada Mandal",
+        "city": "Sri City (Tirupati District)",
+        "state": "Andhra Pradesh",
+        "office_address": "Sri City Industrial Area Local Authority (IALA) Office, Central Expressway, Sri City, Tirupati District, Andhra Pradesh 517646",
+        "lat": 13.5550,
+        "lng": 80.0260,
+        "phone": "08623-281000",
+        "officer_in_charge": "Zonal Municipal Commissioner (Sri City / Tada Division)",
+    },
 
     # =========================================================================
     # 4. TAMIL NADU (GCC Greater Chennai, Coimbatore, Madurai, Tiruchirappalli)
@@ -336,8 +348,11 @@ def find_responsible_ward_for_location(
                 or w["ward_name"].lower() in preferred_ward_id.lower()
             ):
                 dist = calculate_haversine_distance(lat, lng, w["lat"], w["lng"])
-                maps_link = f"https://www.google.com/maps/search/?api=1&query={w['lat']},{w['lng']}"
-                return ResponsibleWardInfo(**w, distance_km=dist, maps_url=maps_link)
+                # Only accept preferred ward if it is geographically nearby (<= 35 km)
+                # This prevents AI hallucinations from overriding real device GPS
+                if dist <= 35.0:
+                    maps_link = f"https://www.google.com/maps/search/?api=1&query={w['lat']},{w['lng']}"
+                    return ResponsibleWardInfo(**w, distance_km=dist, maps_url=maps_link)
 
     # Find closest responsible ward geographically
     best_ward = None

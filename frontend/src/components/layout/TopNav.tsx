@@ -78,7 +78,7 @@ export const TopNav: React.FC<TopNavProps> = ({
       ) : (
         <div className="hidden md:flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-neutral-700">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Municipal BBMP Ward Command Center</span>
+          <span>Municipal Ward Command Center</span>
         </div>
       )}
 

@@ -73,7 +73,7 @@ def get_default_demo_work_order_fallback(incident: Dict[str, Any]) -> WorkOrderR
         f"### 2. Recommended Crew Composition\n{crew}\n\n"
         f"### 3. Equipment & Materials Required\n" + "\n".join(f"- {e}" for e in equip) + "\n\n"
         f"### 4. Safety & Hazard Precautions\n" + "\n".join(f"- {s}" for s in safety) + "\n\n"
-        f"*Dispatched under BBMP / State Municipal Public Works Standard Operating Procedure.*"
+        f"*Dispatched under Municipal Urban Local Body Standard Operating Procedure.*"
     )
 
     return WorkOrderResponse(

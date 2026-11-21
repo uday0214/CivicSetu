@@ -74,6 +74,8 @@ CRITICAL INSTRUCTIONS:
 def get_default_demo_triage_fallback(
     text_prompt: Optional[str] = None,
     landmark: Optional[str] = None,
+    lat: Optional[float] = None,
+    lng: Optional[float] = None,
 ) -> IntakeTriageResponse:
     """Deterministic fallback fixture for live pitch demo resilience (P0 Monsoon Hazard)."""
     is_live_wire = text_prompt and any(w in text_prompt.lower() for w in ["wire", "current", "bijli", "shock", "pole", "bescom"])
@@ -119,19 +121,35 @@ def get_default_demo_triage_fallback(
             landmark_clues=landmark or "Opposite Koramangala Market Complex",
             visual_hazard_factors=["Footpath blockage", "Attracting stray animals", "Foul odor"],
             monsoon_multiplier_applied=False,
-            jurisdiction_rationale="Solid waste management and commercial market sanitation are the direct statutory responsibility of the Urban Local Body (BBMP).",
+            jurisdiction_rationale="Solid waste management and commercial market sanitation are the direct statutory responsibility of the Urban Local Body (ULB).",
             confidence_score=0.94,
             triage_trace=ExplainableTriageTrace(
                 visual_hazard_factors=["Footpath blockage", "Attracting stray animals", "Foul odor"],
                 vulnerable_proximity="Commercial market pedestrian walkway",
                 monsoon_multiplier=False,
-                jurisdiction_rationale="Solid waste management and commercial market sanitation are the direct statutory responsibility of the Urban Local Body (BBMP).",
+                jurisdiction_rationale="Solid waste management and commercial market sanitation are the direct statutory responsibility of the Urban Local Body (ULB).",
                 confidence_score=0.94,
             ),
-            vernacular_acknowledgement="आपकी शिकायत दर्ज कर ली गई है। नगर निगम (BBMP) के स्वच्छता निरीक्षक को कचरा उठाने के लिए सूचित कर दिया गया है।",
+            vernacular_acknowledgement="आपकी शिकायत दर्ज कर ली गई है। नगर निगम (Municipal Corporation) के स्वच्छता निरीक्षक को कचरा उठाने के लिए सूचित कर दिया गया है।",
         )
 
-    # Default: Submerged Pothole on 100 Feet Road (P0 Monsoon Hazard)
+    # Resolve geographical ward and landmark if coordinates are provided
+    resolved_ward_id = "Ward 14 - Indiranagar"
+    resolved_landmark = landmark or "Near Indiranagar Metro Station Pillar 42"
+    resolved_rationale = "100 Feet Road is a notified State Bus Route and arterial corridor maintained by the State Public Works Department (PWD)."
+
+    if lat is not None and lng is not None:
+        try:
+            from backend.services.responsible_ward_service import find_responsible_ward_for_location
+            r_ward = find_responsible_ward_for_location(lat, lng)
+            if r_ward:
+                resolved_ward_id = r_ward.ward_id
+                resolved_landmark = landmark or f"Near {r_ward.ward_name}, {r_ward.city}"
+                resolved_rationale = f"Civic corridor falls under statutory jurisdiction of {r_ward.zone}, {r_ward.city} ({r_ward.state})."
+        except Exception:
+            pass
+
+    # Default: Submerged Pothole (P0 Monsoon Hazard)
     return IntakeTriageResponse(
         is_valid_civic_issue=True,
         detected_language="hi-Latn (Hinglish)",
@@ -141,17 +159,17 @@ def get_default_demo_triage_fallback(
         category=CivicCategory.ROADS_FOOTPATHS,
         priority=PriorityTier.P0_CRITICAL,
         agency=IndianAgency.STATE_PWD,
-        ward_id="Ward 14 - Indiranagar",
-        landmark_clues=landmark or "Near Indiranagar Metro Station Pillar 42",
+        ward_id=resolved_ward_id,
+        landmark_clues=resolved_landmark,
         visual_hazard_factors=["Water depth obscures pothole edges", "Heavy vehicular traffic", "Two-wheeler skidding risk"],
         monsoon_multiplier_applied=True,
-        jurisdiction_rationale="100 Feet Road is a notified State Bus Route and arterial corridor maintained by the State Public Works Department (PWD).",
+        jurisdiction_rationale=resolved_rationale,
         confidence_score=0.96,
         triage_trace=ExplainableTriageTrace(
             visual_hazard_factors=["Water depth obscures pothole edges", "Heavy vehicular traffic", "Two-wheeler skidding risk"],
-            vulnerable_proximity="45m from Indiranagar Metro Station entrance",
+            vulnerable_proximity="Arterial transit road corridor",
             monsoon_multiplier=True,
-            jurisdiction_rationale="100 Feet Road is a notified State Bus Route and arterial corridor maintained by the State Public Works Department (PWD).",
+            jurisdiction_rationale=resolved_rationale,
             confidence_score=0.96,
         ),
         vernacular_acknowledgement="आपकी शिकायत दर्ज कर ली गई है। लोक निर्माण विभाग (PWD) को तत्काल मरम्मत के लिए सूचित किया गया है।",
@@ -172,7 +190,7 @@ async def triage_intake(
     Executes a single-roundtrip multimodal analysis with Gemini using native response_schema.
     Evaluates visual sanity and civic classification in one step.
     """
-    fallback = get_default_demo_triage_fallback(text_prompt=text_prompt, landmark=landmark)
+    fallback = get_default_demo_triage_fallback(text_prompt=text_prompt, landmark=landmark, lat=lat, lng=lng)
 
     # Assemble multimodal content parts
     contents: List[Any] = []

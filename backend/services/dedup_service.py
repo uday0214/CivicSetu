@@ -44,7 +44,7 @@ def haversine_distance_meters(lat1: float, lng1: float, lat2: float, lng2: float
 
 
 GEMINI_DEDUP_SYSTEM_INSTRUCTION = """
-You are CivicSetu's Spatial-Semantic Deduplication Engine for Indian municipal corporations (BBMP, PWD, DISCOMs).
+You are CivicSetu's Spatial-Semantic Deduplication Engine for Indian municipal corporations (ULBs, PWD, DISCOMs).
 Your mission is to determine whether a newly submitted civic complaint refers to the EXACT SAME physical hazard or defect as one of the candidate incidents situated within 100 meters.
 
 Deduplication Rules:

@@ -111,6 +111,8 @@ async def triage_citizen_report(
             lng=lng,
             preferred_ward_id=triage_result.ward_id if triage_result else None,
         )
+        if responsible_ward and triage_result:
+            triage_result.ward_id = responsible_ward.ward_id
 
     return IntakeSubmissionResult(
         photo_url=photo_url,

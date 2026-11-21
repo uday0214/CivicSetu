@@ -93,29 +93,68 @@ CivicSetu was architected, scaffolded, and hardened using **Google Antigravity**
                                     └──► Rejection Notice to Contractor
 ```
 
-### Step 1: Snap & Speak Citizen Intake
-* **Effortless Reporting:** Citizens take a photo or record a voice note in Kannada, Telugu, Tamil, Hindi, or English.
-* **Automatic Geolocation:** EXIF GPS metadata is extracted directly from the photo; alternatively, browser geolocation locates the incident on an interactive map.
+<p align="center">
+  <img src="assets/screenshots/01_landing_hero.png" width="800" alt="CivicSetu Landing Page & South India Multi-State Selector" />
+  <br />
+  <em>Figure 1: CivicSetu Landing Page & Multi-State Regional Hub across Karnataka, Telangana, Andhra Pradesh, and Tamil Nadu.</em>
+</p>
+
+### Step 1: Snap & Speak Multimodal Intake
+* **Effortless Reporting:** Citizens take a photo or record a voice note in Kannada, Telugu, Tamil, Hindi, or English without having to fill tedious forms.
+* **Intelligent Audio & Visual Analysis:** Spoken audio is transcribed with dialect detection and combined with image features in a single Gemini pass.
 * **Instant Vernacular Confirmation:** Gemini acknowledges the citizen's report in their native dialect (e.g., Kannada: *"ಧನ್ಯವಾದಗಳು! ನಿಮ್ಮ ದೂರು ದಾಖಲಾಗಿದೆ"*).
 
-### Step 2: Intelligent Triage & Responsible Ward Identification
-* **Instant Jurisdiction Card:** CivicSetu automatically matches GPS coordinates against municipal ward boundaries (e.g., *Ward 14 - Indiranagar, BBMP East Zone* or *Circle 20 - Serilingampally, GHMC*).
-* **Direct Office Details:** The citizen immediately sees the local ward office address, executive engineer contact phone number, and a direct Google Maps navigation button.
+<p align="center">
+  <img src="assets/screenshots/02_snap_speak_intake.jpg" width="700" alt="Step 1: Snap & Speak Multimodal Intake" />
+  <br />
+  <em>Figure 2: Step 1 — Zero-friction Snap & Speak multimodal citizen intake with native vernacular audio recording.</em>
+</p>
 
-### Step 3: 100m Spatial-Semantic Deduplication
-* If another citizen reported the same pothole or broken street light within 100 meters, CivicSetu presents the existing incident.
-* Rather than creating duplicate tickets, citizens click **"I'm affected too"**, upvoting the ticket and boosting its Community Impact score to expedite municipal response.
+### Step 2: Geolocation & Interactive Map Pinning
+* **Automatic Geolocation:** EXIF GPS metadata is automatically extracted directly from the photo, with browser geolocation fallback.
+* **Interactive Map Pinning:** Citizens can visually verify and fine-tune the exact defect pin on an interactive Leaflet map to guarantee precise field navigation for municipal crews.
+* **Surrounding Landmark Context:** Proximity landmarks and road assets are mapped to provide spatial grounding for field engineers.
 
-### Step 4: Municipal Admin Command Center
+<p align="center">
+  <img src="assets/screenshots/03_location_map_pin.png" width="700" alt="Step 2: Geolocation & Interactive Map Pinning" />
+  <br />
+  <em>Figure 3: Step 2 — Real-time GPS extraction, interactive map pinning, and landmark detection.</em>
+</p>
+
+### Step 3: Gemini Multimodal Triage & Statutory Ward Routing
+* **Structured Multimodal Triage:** Gemini 2.5 Flash classifies category, severity (P0–P3), monsoon risk flags, and safety hazards using structured Pydantic schemas.
+* **Instant Jurisdiction Resolution:** CivicSetu automatically matches coordinates against municipal boundaries (e.g., *Ward 14 - Indiranagar, BBMP East Zone* or *Circle 20 - Serilingampally, GHMC*).
+* **Direct Office Details & Redirection:** The citizen immediately sees the responsible local ward office address, executive engineer contact phone number, and a direct Google Maps navigation link.
+* **100m Spatial-Semantic Deduplication:** If another citizen reported the same defect within 100 meters, Gemini compares the defects. Citizens can click **"I'm affected too"**, upvoting the ticket and boosting its Community Impact score to expedite municipal response without duplicate backlog.
+
+<p align="center">
+  <img src="assets/screenshots/04_ai_triage_routing.png" width="700" alt="Step 3: Gemini Multimodal Triage & Statutory Ward Routing" />
+  <br />
+  <em>Figure 4: Step 3 — Gemini structured multimodal triage with statutory ward jurisdiction resolution and direct escalation contacts.</em>
+</p>
+
+### Step 4: Municipal Admin Command Center & Live GIS Map
 * **Live GIS Operations Map:** Ward engineers and commissioners monitor real-time incidents plotted with priority-coded markers across southern urban zones.
-* **Explainable AI Drawer:** Every ticket includes an explainable AI breakdown showing identified physical hazards, monsoon risk flags, and jurisdictional rationales.
-* **One-Click Dispatch:** Administrators can generate structured work orders and transition tickets to `IN_PROGRESS` with one click.
+* **Explainable AI Drawer:** Every ticket includes an explainable AI breakdown showing identified physical hazards, monsoon vulnerability flags, and jurisdictional rationales.
+* **Dynamic SLA Tracking:** Incidents are tracked with active SLA breach countdown timers, ensuring high-impact hazards receive urgent attention.
 
-### Step 5: Before & After Visual Resolution Audit
-* When field contractors finish repairs, they must upload an on-site completion photo.
-* **Gemini Dual-Image Comparison:** Gemini compares the original defect against the repair photo, checking repair quality, surface uniformity, and landmark consistency.
+<p align="center">
+  <img src="assets/screenshots/05_admin_command_center.jpg" width="800" alt="Step 4: Municipal Admin Command Center & Live GIS Map" />
+  <br />
+  <em>Figure 5: Step 4 — Municipal Admin Command Center with live GIS incident map, priority-coded markers, and SLA management.</em>
+</p>
+
+### Step 5: 1-Click AI Field Work Order Generation & Resolution Audit
+* **1-Click AI Work Order Dispatch:** Administrators generate structured, actionable field work orders with technical repair specifications and transition tickets to `IN_PROGRESS` with one click.
+* **Gemini Dual-Image Comparison:** When field contractors finish repairs, they must upload an on-site completion photo. Gemini compares the original defect against the repair photo, checking repair quality, surface uniformity, and landmark consistency.
 * **Anti-Fraud Guard:** If a contractor uploads an unrelated photo, Gemini rejects the closure with an explicit failure reason.
 * **Citizen Voice:** If a repair was substandard, citizens retain a 48-hour window to reopen the ticket with one tap.
+
+<p align="center">
+  <img src="assets/screenshots/06_ai_work_order.png" width="700" alt="Step 5: 1-Click AI Field Work Order Generation" />
+  <br />
+  <em>Figure 6: Step 5 — 1-Click AI Field Work Order generation with contractor dispatch and repair specifications.</em>
+</p>
 
 ---
 

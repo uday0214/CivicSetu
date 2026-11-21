@@ -57,7 +57,7 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
   // Resolution Audit states
   const [afterPhotoFile, setAfterPhotoFile] = useState<File | null>(null);
   const [afterPhotoPreview, setAfterPhotoPreview] = useState<string | null>(null);
-  const [contractorId, setContractorId] = useState<string>('CONTRACTOR-BBMP-42');
+  const [contractorId, setContractorId] = useState<string>('CONTRACTOR-ULB-42');
   const [closureNotes, setClosureNotes] = useState<string>('');
   const [isAuditing, setIsAuditing] = useState<boolean>(false);
   const [auditResult, setAuditResult] = useState<ResolutionSubmitResult | null>(null);

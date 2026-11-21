@@ -40,7 +40,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated, onClose }) 
     } else {
       setEmail('admin@bbmp.gov.in');
       setPassword('bbmp2025');
-      setDepartment('BBMP Road Infrastructure');
+      setDepartment('Municipal Road Infrastructure');
     }
   };
 
@@ -157,7 +157,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated, onClose }) 
             <div>
               <span className="text-xs font-black text-neutral-950 block">Municipal Staff</span>
               <span className="text-[10px] text-neutral-500 leading-tight block mt-0.5">
-                BBMP Command & work orders
+                Municipal Command & work orders
               </span>
             </div>
           </button>
@@ -178,7 +178,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthenticated, onClose }) 
                 <span>
                   {selectedRole === 'citizen'
                     ? 'Continue as Citizen (Aarav Sharma)'
-                    : 'Continue as BBMP Officer (Ramesh Kumar)'}
+                    : 'Continue as Municipal Officer (Ramesh Kumar)'}
                 </span>
                 <ArrowRight className="w-4 h-4" />
               </>
