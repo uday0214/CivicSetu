@@ -16,6 +16,7 @@ import {
   AuthUser,
 } from './types/api';
 import { CheckCircle2, Loader2, Camera, MapPin, ClipboardList } from 'lucide-react';
+import { InteractiveSideNodes } from './components/common/InteractiveSideNodes';
 
 export function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => apiClient.getStoredUser());
@@ -217,8 +218,16 @@ export function App() {
             </div>
 
             {/* Centered Details Pane - Flowing Strictly Top-to-Bottom */}
-            <div className="flex-1 bg-neutral-50/70 py-8 sm:py-12 px-4 sm:px-6">
-              <div className="max-w-2xl sm:max-w-3xl mx-auto">
+            <div className="flex-1 bg-neutral-50/70 py-8 sm:py-12 px-4 sm:px-6 relative overflow-hidden">
+              {/* Lightweight Interactive Connected Side Nodes */}
+              <div className="left-2 inset-y-0 absolute">
+                <InteractiveSideNodes side="left" />
+              </div>
+              <div className="right-2 inset-y-0 absolute">
+                <InteractiveSideNodes side="right" />
+              </div>
+
+              <div className="max-w-2xl sm:max-w-3xl mx-auto relative z-10">
                 {citizenTab === 'report' && (
                   <SnapSpeakForm onReportSubmitted={handleReportSubmitted} />
                 )}
