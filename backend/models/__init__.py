@@ -18,6 +18,10 @@ from backend.models.schemas import (
     MasterIncident,
     RawCitizenInput,
 )
+from backend.models.intake import (
+    IntakeTriageResponse,
+    IntakeSubmissionResult,
+)
 from backend.models.state_machine import (
     is_valid_status_transition,
     validate_resolution_closure,
@@ -41,6 +45,8 @@ __all__ = [
     "CitizenReport",
     "MasterIncident",
     "RawCitizenInput",
+    "IntakeTriageResponse",
+    "IntakeSubmissionResult",
     "is_valid_status_transition",
     "validate_resolution_closure",
     "compute_sla_deadline",

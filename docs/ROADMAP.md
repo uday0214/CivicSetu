@@ -93,7 +93,7 @@ This roadmap is modularized into sequentially numbered sections (`Section 1`, `S
 ## 3. Gemini Multimodal AI Engine & Structured Output Contracts
 *Goal: Construct a unified single-call Gemini structured-output prompt using `google-genai` for zero-friction intake, visual pre-validation, and explainable triage.*
 
-- **3.1. Unified Multimodal Intake & Sanity Gate (Single Round-Trip)**
+- [x] **3.1. Unified Multimodal Intake & Sanity Gate (Single Round-Trip)**
   - Merge visual sanity filtering and multimodal triage into a **single Gemini multimodal structured-output call** (`IntakeTriageResponse`) to minimize latency and conserve free-tier API quota:
     - Accepts: Image (JPEG/PNG) and/or voice note (**`audio/webm`**, **`audio/mp4`**, or **`audio/wav`** supported natively) or text.
     - Gemini evaluates both visual validity and civic content in one pass:
@@ -106,9 +106,9 @@ This roadmap is modularized into sequentially numbered sections (`Section 1`, `S
         5. Extracts landmark clues ("Near Indiranagar Metro Station Pillar 42").
         6. Generates Explainable AI Triage Trace (`visual_hazard_factors`, `jurisdiction_rationale`, `confidence_score`).
         7. Generates warm, reassuring acknowledgement in the citizen's detected vernacular language.
-- **3.2. Structured Response Schema Implementation**
+- [x] **3.2. Structured Response Schema Implementation**
   - Implement using `client.models.generate_content()` with `config={"response_mime_type": "application/json", "response_schema": IntakeTriageResponse}` via the official `google-genai` SDK.
-- **Acceptance Criteria for Section 3:**
+- **Acceptance Criteria for Section 3 (PASSED):**
   - Automated tests running sample Hindi/Hinglish audio (`audio/webm`, `audio/wav`) and civic photos return schema-valid JSON without markdown formatting artifacts in a single Gemini call.
   - Blurry/non-civic test image triggers `is_valid_civic_issue == false` with helpful user prompt.
 

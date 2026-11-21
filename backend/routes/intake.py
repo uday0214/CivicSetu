@@ -1,0 +1,90 @@
+"""CivicSetu Intake API Routes."""
+
+import logging
+from typing import Optional
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+
+from backend.storage.media_store import get_media_storage
+from backend.services.intake_service import triage_intake
+from backend.models.intake import IntakeSubmissionResult
+
+logger = logging.getLogger("civicsetu.routes.intake")
+
+router = APIRouter(prefix="/api/intake", tags=["intake"])
+
+
+@router.post("/triage", response_model=IntakeSubmissionResult)
+async def triage_citizen_report(
+    photo: Optional[UploadFile] = File(None),
+    audio: Optional[UploadFile] = File(None),
+    text: Optional[str] = Form(None),
+    lat: Optional[float] = Form(None),
+    lng: Optional[float] = Form(None),
+    landmark: Optional[str] = Form(None),
+):
+    """
+    Unified single-roundtrip multimodal intake endpoint.
+    Accepts photo, audio voice note, and/or text description with optional GPS coordinates and landmark.
+    Saves media via MediaStorageAdapter and executes Gemini multimodal triage with visual sanity check.
+    """
+    if not photo and not audio and not text:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one input modality (photo, audio voice note, or text description) must be provided."
+        )
+
+    photo_bytes: Optional[bytes] = None
+    photo_mime: Optional[str] = None
+    photo_url: Optional[str] = None
+
+    audio_bytes: Optional[bytes] = None
+    audio_mime: Optional[str] = None
+    audio_url: Optional[str] = None
+
+    media_storage = get_media_storage()
+
+    # Process and save photo if provided
+    if photo:
+        try:
+            photo_bytes = await photo.read()
+            photo_mime = photo.content_type or "image/jpeg"
+            if len(photo_bytes) > 0:
+                photo_url = await media_storage.save_bytes(
+                    data=photo_bytes,
+                    mime_type=photo_mime,
+                    filename_prefix="intake_photo",
+                )
+        except Exception as e:
+            logger.error(f"Failed to read/save uploaded photo: {e}")
+
+    # Process and save audio if provided
+    if audio:
+        try:
+            audio_bytes = await audio.read()
+            audio_mime = audio.content_type or "audio/webm"
+            if len(audio_bytes) > 0:
+                audio_url = await media_storage.save_bytes(
+                    data=audio_bytes,
+                    mime_type=audio_mime,
+                    filename_prefix="intake_audio",
+                )
+        except Exception as e:
+            logger.error(f"Failed to read/save uploaded audio: {e}")
+
+    # Execute Gemini multimodal structured triage
+    triage_result = await triage_intake(
+        image_bytes=photo_bytes,
+        image_mime=photo_mime,
+        audio_bytes=audio_bytes,
+        audio_mime=audio_mime,
+        text_prompt=text,
+        lat=lat,
+        lng=lng,
+        landmark=landmark,
+    )
+
+    return IntakeSubmissionResult(
+        photo_url=photo_url,
+        audio_url=audio_url,
+        triage=triage_result,
+    )

@@ -102,6 +102,29 @@ export interface CitizenReport {
   timestamp: string;
 }
 
+export interface IntakeTriageResponse {
+  is_valid_civic_issue: boolean;
+  rejection_reason?: string | null;
+  suggested_user_prompt?: string | null;
+  language_detected?: string | null;
+  transcription?: string | null;
+  title?: string | null;
+  description_standardized_en?: string | null;
+  category?: CivicCategory | null;
+  priority?: PriorityTier | null;
+  agency?: IndianAgency | null;
+  ward_id?: string | null;
+  extracted_landmark?: string | null;
+  triage_trace?: ExplainableTriageTrace | null;
+  vernacular_acknowledgement?: string | null;
+}
+
+export interface IntakeSubmissionResult {
+  photo_url?: string | null;
+  audio_url?: string | null;
+  triage: IntakeTriageResponse;
+}
+
 export interface SystemStatus {
   status: string;
   service: string;

@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 
 from backend.config import settings
 from backend.routes.health import router as health_router
+from backend.routes.intake import router as intake_router
 
 app = FastAPI(
     title="CivicSetu API",
@@ -26,6 +27,7 @@ app.add_middleware(
 
 # Register API routes
 app.include_router(health_router)
+app.include_router(intake_router)
 
 # Mount local uploads directory if it exists
 upload_dir = os.path.abspath("backend/uploads")
