@@ -7,6 +7,7 @@ import {
   Square,
   Sparkles,
   MapPin,
+  Crosshair,
   AlertCircle,
   CheckCircle2,
   Send,
@@ -112,6 +113,40 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
       leafletMapRef.current = null;
     };
   }, []);
+
+  // Attempt silent GPS geolocation on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLat(pos.coords.latitude);
+          setLng(pos.coords.longitude);
+        },
+        () => {
+          // Defaults to Bengaluru coords if denied/unavailable
+        },
+        { timeout: 4000 }
+      );
+    }
+  }, []);
+
+  const handleLocateMe = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLat(pos.coords.latitude);
+          setLng(pos.coords.longitude);
+        },
+        (err) => {
+          console.warn('Geolocation error:', err);
+          alert('Could not retrieve current GPS coordinates. Please ensure location permissions are enabled or click/drag the pin on the map.');
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
+    }
+  };
 
   // Sync marker position when lat/lng change
   useEffect(() => {
@@ -476,10 +511,22 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
 
       {/* Step B: Location & Landmark Strip */}
       <div className="bg-white border border-neutral-300 rounded-2xl p-5 shadow-sm space-y-3">
-        <h3 className="text-sm font-black text-neutral-950 flex items-center gap-2 uppercase tracking-wide">
-          <MapPin className="w-4 h-4 text-neutral-900" />
-          2. Location & Landmark
-        </h3>
+        <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+          <h3 className="text-sm font-black text-neutral-950 flex items-center gap-2 uppercase tracking-wide">
+            <MapPin className="w-4 h-4 text-neutral-900" />
+            2. Location & Landmark
+          </h3>
+
+          <button
+            type="button"
+            onClick={handleLocateMe}
+            className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-neutral-800 hover:text-black border border-neutral-300 hover:border-black rounded-full px-3 py-1 bg-neutral-50 hover:bg-neutral-100 transition shadow-xs active:translate-y-0.5"
+            title="Automatically detect current GPS position"
+          >
+            <Crosshair className="w-3 h-3 text-neutral-700" />
+            <span>Locate Me</span>
+          </button>
+        </div>
 
         {/* Mini Leaflet Pin-Drop Map */}
         <div ref={mapContainerRef} className="w-full h-36 rounded-xl overflow-hidden border border-neutral-300 shadow-inner" />
