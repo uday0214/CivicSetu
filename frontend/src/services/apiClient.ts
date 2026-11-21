@@ -18,6 +18,7 @@ import {
   AuthResponse,
   AssetRecord,
   AssetStats,
+  GoverningOffice,
 } from '../types/api';
 
 const API_BASE = '/api';
@@ -148,6 +149,17 @@ export const apiClient = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Triage request failed' }));
       throw new Error(err.detail || 'Triage request failed');
+    }
+    return res.json();
+  },
+
+  async getNearestOffice(lat: number, lng: number, agency?: string, state?: string): Promise<GoverningOffice> {
+    const params = new URLSearchParams({ lat: lat.toString(), lng: lng.toString() });
+    if (agency) params.append('agency', agency);
+    if (state) params.append('state', state);
+    const res = await fetch(`${API_BASE}/intake/nearest-office?${params.toString()}`);
+    if (!res.ok) {
+      throw new Error('Failed to find nearest governing office');
     }
     return res.json();
   },

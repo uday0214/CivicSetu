@@ -148,6 +148,20 @@ export interface IntakeTriageResponse {
   triage_trace?: ExplainableTriageTrace | null;
 }
 
+export interface GoverningOffice {
+  id: string;
+  name: string;
+  office_type: string;
+  state: string;
+  city: string;
+  address: string;
+  lat: number;
+  lng: number;
+  phone: string;
+  jurisdiction_agency: string;
+  distance_km?: number | null;
+}
+
 export interface IntakeSubmissionResult {
   photo_url?: string | null;
   audio_url?: string | null;
@@ -156,6 +170,7 @@ export interface IntakeSubmissionResult {
   lat?: number | null;
   lng?: number | null;
   landmark?: string | null;
+  nearest_governing_office?: GoverningOffice | null;
 }
 
 export interface DedupComparisonResponse {

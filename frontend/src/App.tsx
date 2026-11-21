@@ -164,15 +164,15 @@ export function App() {
               <div className="max-w-2xl mx-auto space-y-4">
                 <div className="inline-flex items-center gap-2 text-neutral-900 font-mono text-xs uppercase tracking-widest font-bold bg-neutral-100 border border-neutral-200 px-3 py-1 rounded-full">
                   <span>✦</span>
-                  <span>Bengaluru Urban Governance</span>
+                  <span>Karnataka • Telangana • Andhra Pradesh • Tamil Nadu</span>
                 </div>
 
                 <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-neutral-950 leading-[1.1]">
-                  Civic issue reporting for Bengaluru
+                  Civic issue reporting across South India
                 </h1>
 
                 <p className="text-sm sm:text-base text-neutral-600 max-w-xl mx-auto leading-relaxed">
-                  Report potholes, overflowing garbage, or broken streetlights in seconds. Snap a photo or speak naturally in <strong>Kannada, Hindi, or English</strong>. Verified tickets are resolved by BBMP within 48 hours.
+                  Report potholes, overflowing sewage, or broken streetlights in seconds. Snap a photo or speak naturally in <strong>Kannada, Telugu, Tamil, Hindi, or English</strong>. Verified tickets are routed directly to your nearest municipal authority.
                 </p>
 
                 {/* Centered Flow Tab Switcher */}
@@ -238,16 +238,16 @@ export function App() {
               <div className="p-5 flex items-center gap-3">
                 <span className="font-mono text-xl text-neutral-400 font-bold">01</span>
                 <div>
-                  <span className="font-black text-neutral-950 block">198 Wards</span>
-                  <span className="text-[10px] text-neutral-500 normal-case">Full BBMP municipal coverage</span>
+                  <span className="font-black text-neutral-950 block">4 States Covered</span>
+                  <span className="text-[10px] text-neutral-500 normal-case">KA • TG • AP • TN municipal corporations</span>
                 </div>
               </div>
 
               <div className="p-5 flex items-center gap-3">
                 <span className="font-mono text-xl text-neutral-400 font-bold">02</span>
                 <div>
-                  <span className="font-black text-neutral-950 block">48-Hour SLA</span>
-                  <span className="text-[10px] text-neutral-500 normal-case">Guaranteed municipal response window</span>
+                  <span className="font-black text-neutral-950 block">GPS Office Mapping</span>
+                  <span className="text-[10px] text-neutral-500 normal-case">Instant closest governing authority dispatch</span>
                 </div>
               </div>
 
@@ -255,7 +255,7 @@ export function App() {
                 <span className="font-mono text-xl text-neutral-400 font-bold">03</span>
                 <div>
                   <span className="font-black text-neutral-950 block">Multilingual</span>
-                  <span className="text-[10px] text-neutral-500 normal-case">Kannada, Hindi & English voice intake</span>
+                  <span className="text-[10px] text-neutral-500 normal-case">Kannada, Telugu, Tamil, Hindi & English</span>
                 </div>
               </div>
 

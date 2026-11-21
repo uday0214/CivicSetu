@@ -24,20 +24,42 @@ import {
   DedupCheckResult,
   ReportSubmissionRequest,
   ReportSubmissionResponse,
+  GoverningOffice,
   CIVIC_CATEGORIES,
   PRIORITY_TIERS,
 } from '../../types/api';
 import { DuplicateModal } from './DuplicateModal';
 import { createCustomSvgPin } from '../../utils/mapIcons';
 
-const BENGALURU_PRESETS = [
-  { name: 'Indiranagar', lat: 12.9784, lng: 77.6408, landmark: '100 Feet Road, Indiranagar, Bengaluru' },
-  { name: 'Koramangala', lat: 12.9352, lng: 77.6245, landmark: '80 Feet Road, Koramangala 4th Block, Bengaluru' },
-  { name: 'HSR Layout', lat: 12.9121, lng: 77.6446, landmark: '27th Main Road, HSR Layout Sector 1, Bengaluru' },
-  { name: 'Bellandur', lat: 12.9304, lng: 77.6784, landmark: 'Outer Ring Road, Bellandur, Bengaluru' },
-  { name: 'Whitefield', lat: 12.9698, lng: 77.7499, landmark: 'ITPB Main Road, Whitefield, Bengaluru' },
-  { name: 'Central / MG Rd', lat: 12.9756, lng: 77.6066, landmark: 'MG Road Metro Station, Central Bengaluru' },
+interface RegionPreset {
+  name: string;
+  state: 'Karnataka' | 'Telangana' | 'Tamil Nadu' | 'Andhra Pradesh';
+  lat: number;
+  lng: number;
+  landmark: string;
+}
+
+const REGIONAL_PRESETS: RegionPreset[] = [
+  // Karnataka
+  { name: 'Indiranagar (BLR)', state: 'Karnataka', lat: 12.9784, lng: 77.6408, landmark: '100 Feet Road, Indiranagar, Bengaluru, Karnataka' },
+  { name: 'Koramangala (BLR)', state: 'Karnataka', lat: 12.9352, lng: 77.6245, landmark: '80 Feet Road, Koramangala 4th Block, Bengaluru, Karnataka' },
+  { name: 'Bellandur / ORR (BLR)', state: 'Karnataka', lat: 12.9304, lng: 77.6784, landmark: 'Outer Ring Road, Bellandur, Bengaluru, Karnataka' },
+  { name: 'Mysuru MCC', state: 'Karnataka', lat: 12.3051, lng: 76.6552, landmark: 'Sayyaji Rao Road, Mysuru, Karnataka' },
+  // Telangana
+  { name: 'Madhapur / Hitec City (HYD)', state: 'Telangana', lat: 17.4483, lng: 78.3915, landmark: 'Cyber Towers Junction, Madhapur, Hyderabad, Telangana' },
+  { name: 'Banjara Hills (HYD)', state: 'Telangana', lat: 17.4156, lng: 78.4350, landmark: 'Road No 1, Banjara Hills, Hyderabad, Telangana' },
+  { name: 'Warangal (GWMC)', state: 'Telangana', lat: 17.9784, lng: 79.5941, landmark: 'Public Garden Road, Hanamkonda, Warangal, Telangana' },
+  // Tamil Nadu
+  { name: 'T. Nagar (Chennai)', state: 'Tamil Nadu', lat: 13.0418, lng: 80.2341, landmark: 'Panagal Park, T. Nagar, Chennai, Tamil Nadu' },
+  { name: 'Adyar / OMR (Chennai)', state: 'Tamil Nadu', lat: 12.9815, lng: 80.2464, landmark: 'Old Mahabalipuram Road, Adyar, Chennai, Tamil Nadu' },
+  { name: 'Coimbatore (CCMC)', state: 'Tamil Nadu', lat: 11.0168, lng: 76.9558, landmark: 'Town Hall, Big Bazaar St, Coimbatore, Tamil Nadu' },
+  // Andhra Pradesh
+  { name: 'Beach Road (Vizag)', state: 'Andhra Pradesh', lat: 17.7145, lng: 83.3235, landmark: 'RK Beach Road, Pandurangapuram, Visakhapatnam, Andhra Pradesh' },
+  { name: 'MG Road (Vijayawada)', state: 'Andhra Pradesh', lat: 16.5062, lng: 80.6480, landmark: 'Canal Road, Governorpet, Vijayawada, Andhra Pradesh' },
+  { name: 'Tirupati (TMC)', state: 'Andhra Pradesh', lat: 13.6288, lng: 79.4192, landmark: 'Tilak Road, Tirupati, Andhra Pradesh' },
 ];
+
+const BENGALURU_PRESETS = REGIONAL_PRESETS;
 
 interface SnapSpeakFormProps {
   onReportSubmitted: (result: ReportSubmissionResponse) => void;
@@ -58,15 +80,41 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<number | null>(null);
 
-  // Location & landmark states (Bengaluru defaults)
+  // Location & landmark states (South India regional defaults)
+  const [selectedStateFilter, setSelectedStateFilter] = useState<'All' | 'Karnataka' | 'Telangana' | 'Tamil Nadu' | 'Andhra Pradesh'>('All');
   const [lat, setLat] = useState<number>(12.9716);
   const [lng, setLng] = useState<number>(77.6412);
   const [landmark, setLandmark] = useState<string>('100 Feet Road, Indiranagar, Bengaluru');
+  const [nearestOffice, setNearestOffice] = useState<GoverningOffice | null>(null);
+  const [isLoadingOffice, setIsLoadingOffice] = useState<boolean>(false);
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [locationStatus, setLocationStatus] = useState<{
     type: 'success' | 'warning' | 'info';
     message: string;
   } | null>(null);
+
+  // Auto fetch nearest governing office whenever lat/lng changes
+  useEffect(() => {
+    let isCurrent = true;
+    const fetchOffice = async () => {
+      setIsLoadingOffice(true);
+      try {
+        const office = await apiClient.getNearestOffice(lat, lng);
+        if (isCurrent) {
+          setNearestOffice(office);
+        }
+      } catch (err) {
+        console.warn('Could not fetch nearest governing office:', err);
+      } finally {
+        if (isCurrent) setIsLoadingOffice(false);
+      }
+    };
+
+    fetchOffice();
+    return () => {
+      isCurrent = false;
+    };
+  }, [lat, lng]);
 
   // AI Triage & submission states
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
@@ -718,31 +766,90 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
           className="w-full h-48 sm:h-52 rounded-xl overflow-hidden border border-neutral-300 shadow-inner"
         />
 
-        {/* Quick Area Jump Buttons */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-[10px] font-mono text-neutral-500 uppercase font-bold mr-1">
-            Quick Jump:
-          </span>
-          {BENGALURU_PRESETS.map((p) => (
-            <button
-              key={p.name}
-              type="button"
-              onClick={() => {
-                setLat(p.lat);
-                setLng(p.lng);
-                setLandmark(p.landmark);
-                setLocationStatus({ type: 'success', message: `📍 Jumped to ${p.name}` });
-                if (leafletMapRef.current && markerRef.current) {
-                  leafletMapRef.current.setView([p.lat, p.lng], 16);
-                  markerRef.current.setLatLng([p.lat, p.lng]);
-                  leafletMapRef.current.invalidateSize();
-                }
-              }}
-              className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-neutral-100 hover:bg-neutral-950 hover:text-white border border-neutral-200 transition active:translate-y-0.5"
-            >
-              {p.name}
-            </button>
-          ))}
+        {/* State Filter & Regional Quick Jump Buttons */}
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+            <span className="text-[10px] font-mono text-neutral-500 uppercase font-bold shrink-0">
+              State:
+            </span>
+            {(['All', 'Karnataka', 'Telangana', 'Tamil Nadu', 'Andhra Pradesh'] as const).map((st) => (
+              <button
+                key={st}
+                type="button"
+                onClick={() => setSelectedStateFilter(st)}
+                className={`text-[10px] font-mono px-2.5 py-1 rounded-full border transition shrink-0 ${
+                  selectedStateFilter === st
+                    ? 'bg-neutral-950 text-white border-neutral-950 font-bold'
+                    : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300'
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-mono text-neutral-500 uppercase font-bold mr-1">
+              Quick Jump:
+            </span>
+            {REGIONAL_PRESETS.filter(
+              (p) => selectedStateFilter === 'All' || p.state === selectedStateFilter
+            ).map((p) => (
+              <button
+                key={p.name}
+                type="button"
+                onClick={() => {
+                  setLat(p.lat);
+                  setLng(p.lng);
+                  setLandmark(p.landmark);
+                  setLocationStatus({ type: 'success', message: `📍 Jumped to ${p.name}` });
+                  if (leafletMapRef.current && markerRef.current) {
+                    leafletMapRef.current.setView([p.lat, p.lng], 16);
+                    markerRef.current.setLatLng([p.lat, p.lng]);
+                    leafletMapRef.current.invalidateSize();
+                  }
+                }}
+                className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-neutral-100 hover:bg-neutral-950 hover:text-white border border-neutral-200 transition active:translate-y-0.5"
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Live Closest Governing Municipal Office Display */}
+        <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-200 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-500 font-bold flex items-center gap-1.5">
+              <MapPin className="w-3 h-3 text-neutral-800" />
+              Nearest Governing Authority
+            </span>
+            {isLoadingOffice ? (
+              <span className="text-[10px] text-neutral-500 font-mono flex items-center gap-1">
+                <Loader2 className="w-2.5 h-2.5 animate-spin" /> Calculating...
+              </span>
+            ) : nearestOffice?.distance_km !== undefined ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                {nearestOffice.distance_km} km away
+              </span>
+            ) : null}
+          </div>
+
+          {nearestOffice && (
+            <div className="pt-0.5">
+              <div className="text-xs font-bold text-neutral-900 leading-snug">
+                {nearestOffice.name}
+              </div>
+              <div className="text-[11px] text-neutral-600 truncate mt-0.5">
+                {nearestOffice.address}
+              </div>
+              <div className="text-[10px] text-neutral-500 font-mono mt-1 flex items-center gap-2">
+                <span>Helpline: {nearestOffice.phone}</span>
+                <span>•</span>
+                <span className="font-semibold text-neutral-700">{nearestOffice.state}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Coordinate indicators & drag hint */}

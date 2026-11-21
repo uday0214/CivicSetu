@@ -11,6 +11,11 @@ from backend.services.dedup_service import (
     process_report_submission,
 )
 from backend.models.intake import IntakeSubmissionResult
+from backend.services.geo_office_service import (
+    find_nearest_governing_office,
+    GoverningOfficeInfo,
+    GOVERNING_OFFICES,
+)
 from backend.models.dedup import (
     DedupCheckRequest,
     DedupCheckResult,
@@ -93,6 +98,10 @@ async def triage_citizen_report(
         landmark=landmark,
     )
 
+    nearest_office = None
+    if lat is not None and lng is not None:
+        nearest_office = find_nearest_governing_office(lat=lat, lng=lng)
+
     return IntakeSubmissionResult(
         photo_url=photo_url,
         audio_url=audio_url,
@@ -101,7 +110,24 @@ async def triage_citizen_report(
         lat=lat,
         lng=lng,
         landmark=landmark,
+        nearest_governing_office=nearest_office,
     )
+
+
+@router.get("/nearest-office", response_model=GoverningOfficeInfo)
+async def get_nearest_office_endpoint(
+    lat: float,
+    lng: float,
+    agency: Optional[str] = None,
+    state: Optional[str] = None,
+):
+    """
+    Finds the closest governing municipal / administrative office to given GPS coordinates.
+    Calculates great-circle distance (km) using Haversine algorithm across Karnataka,
+    Telangana, Andhra Pradesh, and Tamil Nadu.
+    """
+    office = find_nearest_governing_office(lat=lat, lng=lng, agency=agency, state=state)
+    return office
 
 
 @router.post("/check-duplicate", response_model=DedupCheckResult)
