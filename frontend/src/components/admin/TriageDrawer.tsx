@@ -23,6 +23,8 @@ import {
   Upload,
   Loader2,
   FileText,
+  Send,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface TriageDrawerProps {
@@ -49,6 +51,8 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
   const [workOrder, setWorkOrder] = useState<WorkOrderResponse | null>(null);
   const [isGeneratingWorkOrder, setIsGeneratingWorkOrder] = useState<boolean>(false);
   const [copiedWorkOrder, setCopiedWorkOrder] = useState<boolean>(false);
+  const [isDispatching, setIsDispatching] = useState<boolean>(false);
+  const [dispatchSuccess, setDispatchSuccess] = useState<boolean>(false);
 
   // Resolution Audit states
   const [afterPhotoFile, setAfterPhotoFile] = useState<File | null>(null);
@@ -104,6 +108,28 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
     navigator.clipboard.writeText(workOrder.work_order_markdown);
     setCopiedWorkOrder(true);
     setTimeout(() => setCopiedWorkOrder(false), 2000);
+  };
+
+  // One-click dispatch to department (moves status to IN_PROGRESS)
+  const handleDispatchToDepartment = async () => {
+    setIsDispatching(true);
+    try {
+      const updated = await apiClient.overrideIncident(incident.incident_id, {
+        status: 'IN_PROGRESS',
+        agency: overrideAgency,
+        priority: overridePriority,
+        notes: `Work order dispatched to ${overrideAgency} field crew. Recommended: ${workOrder?.recommended_crew_size || 'Zonal Response Unit'}.`,
+      });
+      setDispatchSuccess(true);
+      setOverrideStatus('IN_PROGRESS');
+      onIncidentUpdated(updated);
+      setTimeout(() => setDispatchSuccess(false), 3500);
+    } catch (err: any) {
+      console.error('Dispatch failed:', err);
+      alert(err.message || 'Dispatch failed');
+    } finally {
+      setIsDispatching(false);
+    }
   };
 
   // Handle Resolution Audit Submission
@@ -405,6 +431,44 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
                     <li key={idx}>{s}</li>
                   ))}
                 </ul>
+              </div>
+
+              {/* 1-Click Dispatch to Respective Team */}
+              <div className="pt-3 border-t border-neutral-200 space-y-2">
+                <button
+                  type="button"
+                  onClick={handleDispatchToDepartment}
+                  disabled={isDispatching || incident.status === 'IN_PROGRESS'}
+                  className={`w-full py-3 px-5 rounded-full font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition active:translate-y-0.5 ${
+                    incident.status === 'IN_PROGRESS'
+                      ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  }`}
+                >
+                  {isDispatching ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Transmitting order to {overrideAgency}...</span>
+                    </>
+                  ) : incident.status === 'IN_PROGRESS' ? (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Dispatched to {incident.agency} (In Progress)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>1-Click Dispatch to {overrideAgency}</span>
+                    </>
+                  )}
+                </button>
+
+                {dispatchSuccess && (
+                  <p className="text-emerald-700 text-center font-bold text-[11px] flex items-center justify-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Order successfully transmitted! Ticket status is now IN PROGRESS.</span>
+                  </p>
+                )}
               </div>
             </div>
           )}
