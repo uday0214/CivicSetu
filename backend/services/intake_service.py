@@ -44,11 +44,11 @@ CRITICAL INSTRUCTIONS:
 
 4. INDIAN AGENCY JURISDICTION ROUTING:
    - Assign the correct Indian governance layer based on the defect type and location:
-     * "ULB_MUNICIPAL": Colony interior roads, solid waste dumps, uncollected garbage, stray cattle, parks, footpath encroachments (BBMP / GHMC / BMC / MCD).
+     * "ULB_MUNICIPAL": Colony interior roads, solid waste dumps, uncollected garbage, stray cattle, parks, footpath encroachments (Local Municipal Corporation / Urban Local Body of the respective city and state).
      * "STATE_PWD": Major arterial roads, notified bus routes, flyovers, state highways, pedestrian underpasses.
      * "NHAI": Elevated expressway corridors, ring roads, highway bypasses.
-     * "DISCOM_ELECTRICAL": Non-functioning streetlights, fallen electric poles, open transformer boxes, dangling live power cables (BESCOM / TSSPDCL / Tata Power).
-     * "WATER_SEWERAGE_BOARD": Drinking water pipe bursts, sewer line blockages, open or missing stormwater manhole covers, storm drainage (BWSSB / HMWSSB / Delhi Jal Board).
+     * "DISCOM_ELECTRICAL": Non-functioning streetlights, fallen electric poles, open transformer boxes, dangling live power cables (State Electricity Distribution Company).
+     * "WATER_SEWERAGE_BOARD": Drinking water pipe bursts, sewer line blockages, open or missing stormwater manhole covers, storm drainage.
 
 5. PRIORITY TIER & INDIA-SPECIFIC MONSOON MULTIPLIERS:
    - "P0_CRITICAL": Immediate threat to life or physical safety.
@@ -67,7 +67,8 @@ CRITICAL INSTRUCTIONS:
    - Provide "confidence_score": float between 0.0 and 1.0.
 
 7. WARM VERNACULAR ACKNOWLEDGEMENT:
-   - In "vernacular_acknowledgement", output a reassuring, respectful confirmation message addressed to the citizen in their detected native language (e.g. Hindi, Telugu, or Kannada), confirming that their complaint has been registered and routed to the assigned agency.
+   - In "vernacular_acknowledgement", output a reassuring, respectful confirmation message addressed to the citizen in their detected native language (e.g. Telugu, Tamil, Kannada, Hindi, or English), confirming that their complaint has been registered and routed to the assigned local authority.
+   - CRITICAL JURISDICTION ACCURACY: NEVER default to Bruhat Bengaluru Mahanagara Palike (BBMP) unless the GPS coordinates are physically in Bengaluru, Karnataka! If the report is in Andhra Pradesh, Telangana, or Tamil Nadu, refer strictly to the local municipal authority of that region (e.g. Tirupati / Sri City Municipal Authority, GHMC Hyderabad, GCC Chennai, etc.).
 """
 
 
@@ -221,6 +222,14 @@ async def triage_intake(
         context_lines.append(f"Reported Landmark: {landmark}")
     if lat is not None and lng is not None:
         context_lines.append(f"GPS Coordinates: Latitude {lat:.5f}, Longitude {lng:.5f}")
+        try:
+            from backend.services.responsible_ward_service import find_responsible_ward_for_location
+            r_ward = find_responsible_ward_for_location(lat, lng)
+            if r_ward:
+                context_lines.append(f"Official Municipal Jurisdiction: {r_ward.ward_name}, {r_ward.city}, {r_ward.state}")
+                context_lines.append(f"CRITICAL: Defect is physically located in {r_ward.city}, {r_ward.state}. Your triage (title, ward_id, jurisdiction_rationale, and vernacular_acknowledgement) MUST refer to the municipal authority of {r_ward.city} ({r_ward.state}), NEVER Bengaluru / BBMP!")
+        except Exception:
+            pass
 
     contents.append("\n".join(context_lines))
 

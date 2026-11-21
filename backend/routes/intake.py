@@ -114,6 +114,33 @@ async def triage_citizen_report(
         if responsible_ward and triage_result:
             triage_result.ward_id = responsible_ward.ward_id
 
+            # Post-processing safeguard: prevent AI from hallucinating Bengaluru/BBMP when coordinates are in AP/Telangana/TN
+            if "bengaluru" not in responsible_ward.city.lower():
+                local_authority = f"{responsible_ward.ward_name} ({responsible_ward.city})"
+                if triage_result.vernacular_acknowledgement:
+                    text_ack = triage_result.vernacular_acknowledgement
+                    for bad in [
+                        "Bruhat Bengaluru Mahanagara Palike (BBMP)",
+                        "Bruhat Bengaluru Mahanagara Palike",
+                        "BBMP",
+                        "Bengaluru",
+                        "Bangalore",
+                    ]:
+                        text_ack = text_ack.replace(bad, local_authority if ("Palike" in bad or "BBMP" in bad) else responsible_ward.city)
+                    triage_result.vernacular_acknowledgement = text_ack
+
+                if triage_result.jurisdiction_rationale:
+                    text_rat = triage_result.jurisdiction_rationale
+                    for bad in [
+                        "Bruhat Bengaluru Mahanagara Palike (BBMP)",
+                        "Bruhat Bengaluru Mahanagara Palike",
+                        "BBMP",
+                        "Bengaluru",
+                        "Bangalore",
+                    ]:
+                        text_rat = text_rat.replace(bad, local_authority if ("Palike" in bad or "BBMP" in bad) else responsible_ward.city)
+                    triage_result.jurisdiction_rationale = text_rat
+
     return IntakeSubmissionResult(
         photo_url=photo_url,
         audio_url=audio_url,
