@@ -365,39 +365,39 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto p-4 space-y-5 animate-fade-in pb-12">
+    <div className="w-full max-w-xl mx-auto space-y-4 animate-fade-in pb-8">
       {/* Step A: Media Capture Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <Camera className="w-5 h-5 text-emerald-400" />
+      <div className="bg-white border border-neutral-300 rounded-2xl p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+          <h2 className="text-sm font-black text-neutral-950 flex items-center gap-2 uppercase tracking-wide">
+            <Camera className="w-4 h-4 text-neutral-900" />
             1. Snap & Speak Intake
           </h2>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-            Zero Form Fatigue
+          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-300 font-mono uppercase font-bold">
+            Zero Fatigue
           </span>
         </div>
 
         {/* Photo Upload Area */}
         <div>
           {photoPreview ? (
-            <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+            <div className="relative rounded-xl overflow-hidden border border-neutral-300 bg-neutral-100">
               <img src={photoPreview} alt="Civic defect preview" className="w-full h-48 object-cover" />
               <button
                 onClick={() => {
                   setPhotoFile(null);
                   setPhotoPreview(null);
                 }}
-                className="absolute top-2 right-2 p-2 rounded-full bg-slate-900/80 hover:bg-red-600 text-white transition"
+                className="absolute top-2 right-2 p-2 rounded-full bg-neutral-950/80 hover:bg-rose-600 text-white transition shadow-sm"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center min-h-[140px] border-2 border-dashed border-slate-700 hover:border-emerald-500/60 rounded-xl cursor-pointer bg-slate-950/40 hover:bg-slate-950/80 transition p-4 text-center">
-              <Camera className="w-8 h-8 text-slate-400 mb-2" />
-              <span className="text-sm font-semibold text-slate-200">Tap to Capture Photo or Browse</span>
-              <span className="text-xs text-slate-500 mt-1">Extracts EXIF GPS coordinates automatically</span>
+            <label className="flex flex-col items-center justify-center min-h-[130px] border-2 border-dashed border-neutral-300 hover:border-black rounded-xl cursor-pointer bg-neutral-50/60 hover:bg-neutral-100/60 transition p-4 text-center">
+              <Camera className="w-7 h-7 text-neutral-600 mb-2" />
+              <span className="text-xs font-bold text-neutral-900 uppercase tracking-wide">Take Photo or Select File</span>
+              <span className="text-[11px] text-neutral-500 mt-1">Automatic EXIF GPS Coordinate Extraction</span>
               <input
                 type="file"
                 accept="image/*"
@@ -410,14 +410,14 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
         </div>
 
         {/* Vernacular Voice Recorder */}
-        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 flex flex-col gap-2.5">
+        <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-3.5 flex flex-col gap-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-300">
-              🎙️ Speak in Hindi, Kannada, Telugu, Tamil, or English
+            <span className="text-xs font-bold text-neutral-800">
+              🎙️ Speak in Hindi, Kannada, Telugu, or English
             </span>
             {isRecording && (
-              <span className="flex items-center gap-1.5 text-xs font-mono text-red-400 font-bold">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+              <span className="flex items-center gap-1.5 text-xs font-mono text-rose-600 font-bold">
+                <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
                 {String(Math.floor(recordSeconds / 60)).padStart(2, '0')}:
                 {String(recordSeconds % 60).padStart(2, '0')}
               </span>
@@ -429,16 +429,16 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
               <button
                 type="button"
                 onClick={startRecording}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs flex items-center justify-center gap-2 border border-slate-700 transition"
+                className="flex-1 py-2.5 px-4 rounded-full bg-white hover:bg-neutral-100 text-neutral-900 font-bold text-xs flex items-center justify-center gap-2 border border-neutral-300 hover:border-black transition shadow-sm"
               >
-                <Mic className="w-4 h-4 text-emerald-400" />
+                <Mic className="w-4 h-4 text-neutral-900" />
                 Record Voice Note
               </button>
             ) : (
               <button
                 type="button"
                 onClick={stopRecording}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-lg shadow-red-950 transition"
+                className="flex-1 py-2.5 px-4 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
               >
                 <Square className="w-4 h-4" />
                 Stop Recording
@@ -453,7 +453,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
                     setAudioBlob(null);
                     setAudioUrl(null);
                   }}
-                  className="p-2 text-slate-400 hover:text-red-400 transition"
+                  className="p-1.5 text-neutral-400 hover:text-rose-600 transition"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -467,43 +467,43 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
           <textarea
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
-            placeholder="Or type a quick note / Hinglish description (e.g., Road pe bada pothole hai Indiranagar pillar 42 ke paas)..."
+            placeholder="Or type a quick note in Hinglish/English (e.g., Road pe bada pothole hai Indiranagar pillar 42 ke paas)..."
             rows={2}
-            className="w-full text-xs p-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+            className="w-full text-xs p-3 rounded-xl bg-neutral-50 border border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black transition"
           />
         </div>
       </div>
 
       {/* Step B: Location & Landmark Strip */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-cyan-400" />
+      <div className="bg-white border border-neutral-300 rounded-2xl p-5 shadow-sm space-y-3">
+        <h3 className="text-sm font-black text-neutral-950 flex items-center gap-2 uppercase tracking-wide">
+          <MapPin className="w-4 h-4 text-neutral-900" />
           2. Location & Landmark
         </h3>
 
         {/* Mini Leaflet Pin-Drop Map */}
-        <div ref={mapContainerRef} className="w-full h-40 rounded-xl overflow-hidden border border-slate-800 shadow-inner" />
+        <div ref={mapContainerRef} className="w-full h-36 rounded-xl overflow-hidden border border-neutral-300 shadow-inner" />
 
-        <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+        <div className="flex items-center gap-2 text-[11px] text-neutral-600 font-mono">
           <span>Lat: {lat.toFixed(5)}</span>
           <span>•</span>
           <span>Lng: {lng.toFixed(5)}</span>
-          <span className="text-slate-500 text-[11px]">(Drag marker to adjust)</span>
+          <span className="text-neutral-400">(Drag pin to refine location)</span>
         </div>
 
         <input
           type="text"
           value={landmark}
           onChange={(e) => setLandmark(e.target.value)}
-          placeholder="Landmark (e.g., Near SBI ATM, opp. Indiranagar Metro Pillar 42)"
-          className="w-full text-xs p-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500"
+          placeholder="Landmark (e.g., Near Indiranagar Metro Pillar 42, opp. Sony Center)"
+          className="w-full text-xs p-3 rounded-xl bg-neutral-50 border border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black transition"
         />
       </div>
 
       {/* Error alert */}
       {triageError && (
-        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-semibold flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-700 text-xs font-semibold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
           <span>{triageError}</span>
         </div>
       )}
@@ -513,17 +513,17 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
         <button
           onClick={handleAnalyzeWithGemini}
           disabled={isAnalyzing}
-          className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 disabled:opacity-50 text-white font-bold text-sm shadow-xl shadow-teal-950 flex items-center justify-center gap-2 transition"
+          className="w-full py-3.5 px-6 rounded-full bg-neutral-950 hover:bg-neutral-800 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-widest shadow-sm flex items-center justify-center gap-2 transition active:translate-y-0.5"
         >
           {isAnalyzing ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Analyzing photo & transcribing code-mixed voice note...
+              <span>Analyzing with Gemini 2.5 Flash...</span>
             </>
           ) : (
             <>
               <Sparkles className="w-4 h-4 text-amber-300" />
-              Analyze & Auto-Fill with Gemini
+              <span>Analyze & Auto-Triage with Gemini</span>
             </>
           )}
         </button>
@@ -531,14 +531,14 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
 
       {/* Sanity Gate Rejection State */}
       {triageData && !triageData.is_valid_civic_issue && (
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-2 animate-fade-in">
-          <div className="flex items-center gap-2 font-bold text-amber-400">
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs space-y-2 animate-fade-in">
+          <div className="flex items-center gap-2 font-bold text-amber-800">
             <AlertCircle className="w-4 h-4" />
-            Not a Valid Civic Issue / Unclear Media
+            <span>Not a Valid Civic Issue / Unclear Media</span>
           </div>
           <p>{triageData.rejection_reason || 'Photo or note does not appear to report a civic municipal defect.'}</p>
           {triageData.suggested_user_prompt && (
-            <p className="text-amber-200/90 font-medium">💡 Suggestion: {triageData.suggested_user_prompt}</p>
+            <p className="text-amber-800 font-medium">💡 Suggestion: {triageData.suggested_user_prompt}</p>
           )}
           <button
             onClick={() => {
@@ -550,63 +550,63 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
               setTriageData(null);
               setTriageError(null);
             }}
-            className="w-full mt-2 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition flex items-center justify-center gap-2"
+            className="w-full mt-2 py-2 px-3 rounded-full bg-white hover:bg-neutral-100 text-neutral-800 font-bold text-xs border border-neutral-300 transition flex items-center justify-center gap-2"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            Clear Media & Try Again
+            <span>Clear Media & Try Again</span>
           </button>
         </div>
       )}
 
       {/* AI Auto-Fill Review Card */}
       {triageData?.is_valid_civic_issue && (
-        <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-5 shadow-2xl space-y-4 animate-fade-in">
+        <div className="bg-white border border-neutral-300 rounded-2xl p-5 shadow-sm space-y-4 animate-fade-in">
           {/* Vernacular Confirmation Banner */}
           {triageData.vernacular_acknowledgement && (
-            <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-semibold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
               <span>{triageData.vernacular_acknowledgement}</span>
             </div>
           )}
 
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <span className="text-xs font-bold text-white flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+            <span className="text-xs font-black text-neutral-950 uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               AI Verified Triage Details
             </span>
-            <span className="text-[11px] text-slate-400">Review & edit before submission</span>
+            <span className="text-[11px] text-neutral-500 font-mono">Review & edit</span>
           </div>
 
           <div className="space-y-3">
             <div>
-              <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Title</label>
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Title</label>
               <input
                 type="text"
                 value={editableTitle}
                 onChange={(e) => setEditableTitle(e.target.value)}
-                className="w-full text-xs p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white font-medium focus:outline-none focus:border-emerald-500 mt-1"
+                className="w-full text-xs p-2.5 rounded-lg bg-neutral-50 border border-neutral-300 text-neutral-950 font-semibold focus:bg-white focus:outline-none focus:border-black mt-1"
               />
             </div>
 
             <div>
-              <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
                 Standardized English Description
               </label>
               <textarea
                 value={editableDesc}
                 onChange={(e) => setEditableDesc(e.target.value)}
                 rows={2}
-                className="w-full text-xs p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-emerald-500 mt-1"
+                className="w-full text-xs p-2.5 rounded-lg bg-neutral-50 border border-neutral-300 text-neutral-950 focus:bg-white focus:outline-none focus:border-black mt-1"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Category</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Category</label>
                 <select
                   value={editableCategory}
                   onChange={(e) => setEditableCategory(e.target.value as CivicCategory)}
-                  className="w-full text-xs p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-emerald-500 mt-1"
+                  className="w-full text-xs p-2.5 rounded-lg bg-neutral-50 border border-neutral-300 text-neutral-950 focus:bg-white focus:outline-none focus:border-black mt-1 font-medium"
                 >
                   {CIVIC_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
@@ -617,11 +617,11 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Priority</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Priority</label>
                 <select
                   value={editablePriority}
                   onChange={(e) => setEditablePriority(e.target.value as PriorityTier)}
-                  className="w-full text-xs p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-emerald-500 mt-1"
+                  className="w-full text-xs p-2.5 rounded-lg bg-neutral-50 border border-neutral-300 text-neutral-950 focus:bg-white focus:outline-none focus:border-black mt-1 font-medium"
                 >
                   {PRIORITY_TIERS.map((pri) => (
                     <option key={pri} value={pri}>
@@ -634,22 +634,22 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Routed Agency</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Routed Agency</label>
                 <input
                   type="text"
                   value={editableAgency}
                   onChange={(e) => setEditableAgency(e.target.value as IndianAgency)}
-                  className="w-full text-xs p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-emerald-500 mt-1"
+                  className="w-full text-xs p-2.5 rounded-lg bg-neutral-50 border border-neutral-300 text-neutral-950 focus:bg-white focus:outline-none focus:border-black mt-1 font-medium"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Ward ID</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Ward ID</label>
                 <input
                   type="text"
                   value={editableWard}
                   onChange={(e) => setEditableWard(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-emerald-500 mt-1"
+                  className="w-full text-xs p-2.5 rounded-lg bg-neutral-50 border border-neutral-300 text-neutral-950 focus:bg-white focus:outline-none focus:border-black mt-1 font-medium"
                 />
               </div>
             </div>
@@ -658,17 +658,17 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
           <button
             onClick={handlePreSubmission}
             disabled={isSubmitting}
-            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-50 text-white font-bold text-sm shadow-xl shadow-emerald-950 flex items-center justify-center gap-2 transition"
+            className="w-full py-3.5 px-6 rounded-full bg-neutral-950 hover:bg-neutral-800 disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest shadow-sm flex items-center justify-center gap-2 transition active:translate-y-0.5"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Checking duplicates & submitting report...
+                <span>Checking duplicates & dispatching...</span>
               </>
             ) : (
               <>
                 <Send className="w-4 h-4" />
-                Confirm & Submit Report
+                <span>Confirm & Submit Report</span>
               </>
             )}
           </button>
@@ -677,8 +677,8 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
 
       {/* Submission Feedback Toast */}
       {submissionFeedback && (
-        <div className="p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-semibold flex items-center gap-2 animate-fade-in">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
           <span>{submissionFeedback}</span>
         </div>
       )}

@@ -26,15 +26,15 @@ export function getCategoryColor(category: CivicCategory | string): string {
 export function getPriorityBadgeColor(priority: PriorityTier | string): { bg: string; text: string; border: string } {
   switch (priority) {
     case 'P0_CRITICAL':
-      return { bg: 'bg-red-500/15', text: 'text-red-400', border: 'border-red-500/30' };
+      return { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-300' };
     case 'P1_HIGH':
-      return { bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/30' };
+      return { bg: 'bg-orange-50', text: 'text-orange-800', border: 'border-orange-300' };
     case 'P2_MEDIUM':
-      return { bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/30' };
+      return { bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-300' };
     case 'P3_LOW':
-      return { bg: 'bg-blue-500/15', text: 'text-blue-400', border: 'border-blue-500/30' };
+      return { bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-300' };
     default:
-      return { bg: 'bg-slate-700', text: 'text-slate-300', border: 'border-slate-600' };
+      return { bg: 'bg-neutral-100', text: 'text-neutral-800', border: 'border-neutral-300' };
   }
 }
 

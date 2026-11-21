@@ -12,17 +12,19 @@ export const SystemicBriefingModal: React.FC<SystemicBriefingModalProps> = ({
   onClose,
 }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-2xl bg-slate-900 border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/60 backdrop-blur-xs animate-fade-in font-sans">
+      <div className="w-full max-w-2xl bg-white border-2 border-neutral-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="p-4 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
+        <div className="p-4 border-b border-neutral-200 bg-neutral-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-lg bg-neutral-950 flex items-center justify-center text-white">
               <Sparkles className="w-4 h-4 text-amber-300" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Systemic Infrastructure Intelligence</h3>
-              <p className="text-[11px] text-purple-300">
+              <h3 className="text-sm font-black text-neutral-950 uppercase tracking-wide">
+                Systemic Infrastructure Intelligence
+              </h3>
+              <p className="text-[11px] text-neutral-500 font-mono">
                 AI Cross-Ward Pattern Synthesis • {briefing.clusters_detected} Macro Clusters Detected
               </p>
             </div>
@@ -30,7 +32,7 @@ export const SystemicBriefingModal: React.FC<SystemicBriefingModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-full text-neutral-500 hover:text-black hover:bg-neutral-200 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -39,20 +41,20 @@ export const SystemicBriefingModal: React.FC<SystemicBriefingModalProps> = ({
         {/* Modal Body */}
         <div className="p-5 overflow-y-auto space-y-4 text-xs">
           {/* Executive Markdown Analysis */}
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 leading-relaxed text-slate-200 whitespace-pre-wrap font-sans">
+          <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-200 leading-relaxed text-neutral-800 whitespace-pre-wrap font-sans">
             {briefing.systemic_analysis_markdown}
           </div>
 
           {/* Recommended Joint Dispatches */}
           {briefing.recommended_joint_dispatch?.length > 0 && (
-            <div className="p-4 rounded-xl bg-indigo-950/30 border border-indigo-500/30 space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-indigo-400" />
+            <div className="p-4 rounded-xl bg-neutral-100 border border-neutral-300 space-y-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-neutral-950 flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-neutral-700" />
                 Recommended Joint-Agency Dispatches
               </span>
-              <ul className="list-disc list-inside space-y-1 text-slate-300">
+              <ul className="list-disc list-inside space-y-1 text-neutral-800">
                 {briefing.recommended_joint_dispatch.map((item, idx) => (
-                  <li key={idx} className="font-medium">{item}</li>
+                  <li key={idx} className="font-semibold">{item}</li>
                 ))}
               </ul>
             </div>
@@ -60,14 +62,14 @@ export const SystemicBriefingModal: React.FC<SystemicBriefingModalProps> = ({
 
           {/* Priority Watchlist */}
           {briefing.priority_watchlist?.length > 0 && (
-            <div className="p-4 rounded-xl bg-red-950/20 border border-red-500/30 space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-red-400" />
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-300 space-y-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-rose-600" />
                 Commissioner High-Risk Priority Watchlist
               </span>
-              <ul className="list-disc list-inside space-y-1 text-slate-300">
+              <ul className="list-disc list-inside space-y-1 text-rose-900">
                 {briefing.priority_watchlist.map((item, idx) => (
-                  <li key={idx} className="font-semibold text-red-200">{item}</li>
+                  <li key={idx} className="font-bold">{item}</li>
                 ))}
               </ul>
             </div>
@@ -75,13 +77,13 @@ export const SystemicBriefingModal: React.FC<SystemicBriefingModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-slate-800 bg-slate-950 flex justify-end">
+        <div className="p-3 border-t border-neutral-200 bg-neutral-50 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition flex items-center gap-1.5"
+            className="px-5 py-2.5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white font-black text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-sm active:translate-y-0.5"
           >
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            Acknowledge Briefing
+            <span>Acknowledge Briefing</span>
           </button>
         </div>
       </div>

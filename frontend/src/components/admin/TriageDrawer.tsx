@@ -136,94 +136,94 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[540px] bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-slide-left">
+    <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[540px] bg-white border-l border-neutral-900 shadow-2xl flex flex-col overflow-hidden animate-slide-left font-sans">
       {/* 1. Header & Escalation Banner */}
-      <div className="p-4 border-b border-slate-800 bg-slate-950 flex flex-col gap-2 shrink-0">
+      <div className="p-4 border-b border-neutral-200 bg-neutral-50 flex flex-col gap-2 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-mono font-bold text-cyan-400">{incident.incident_id}</span>
-            <span className={`px-2 py-0.5 text-xs font-bold rounded border ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border}`}>
+            <span className="text-sm font-mono font-bold text-neutral-950">{incident.incident_id}</span>
+            <span className={`px-2 py-0.5 text-[10px] font-black rounded border uppercase ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border}`}>
               {incident.priority}
             </span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold uppercase">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-800 font-bold uppercase">
               {incident.status}
             </span>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-full text-neutral-500 hover:text-black hover:bg-neutral-200 transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <h2 className="text-base font-bold text-white leading-tight">{incident.title}</h2>
+        <h2 className="text-base font-black text-neutral-950 leading-tight">{incident.title}</h2>
 
         {/* Escalation Ladder Banner */}
         {isLevel3 ? (
-          <div className="p-2.5 rounded-xl bg-red-600/20 border border-red-500/50 text-red-300 text-xs font-bold flex items-center gap-2 animate-pulse">
-            <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
-            <span>LEVEL 3 • ESCALATED TO MUNICIPAL COMMISSIONER (Overdue P0 Risk)</span>
+          <div className="p-2.5 rounded-xl bg-rose-600 text-white text-xs font-black flex items-center gap-2 shadow-xs">
+            <ShieldAlert className="w-4 h-4 text-white shrink-0" />
+            <span>LEVEL 3 • ESCALATED TO MUNICIPAL COMMISSIONER (Overdue Risk)</span>
           </div>
         ) : isLevel2 ? (
-          <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-semibold flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+          <div className="p-2.5 rounded-xl bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
             <span>LEVEL 2 • ESCALATED TO ZONAL OFFICER (Past SLA Deadline)</span>
           </div>
         ) : (
-          <div className="p-2 rounded-xl bg-slate-800/80 border border-slate-700/80 text-slate-300 text-xs font-medium flex items-center gap-2">
-            <span>Level 1 • Ward Junior Engineer (Within SLA)</span>
+          <div className="p-2 rounded-xl bg-neutral-100 border border-neutral-200 text-neutral-700 text-xs font-medium flex items-center gap-2">
+            <span>Level 1 • Ward Junior Engineer (Within Standard SLA)</span>
           </div>
         )}
       </div>
 
       {/* Drawer Content Body */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-5 divide-y divide-slate-800/80">
+      <div className="flex-1 overflow-y-auto p-4 space-y-5 divide-y divide-neutral-200">
         {/* 2. Explainable AI Triage Trace Card */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
+            <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-amber-500" />
               Explainable AI Triage Trace
             </h3>
             {incident.triage_trace?.confidence_score != null && (
-              <span className="text-xs font-mono font-bold text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
+              <span className="text-xs font-mono font-bold text-neutral-900 bg-neutral-100 px-2 py-0.5 rounded border border-neutral-300">
                 {(incident.triage_trace.confidence_score * 100).toFixed(0)}% AI Confidence
               </span>
             )}
           </div>
 
-          <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2.5 text-xs">
+          <div className="bg-neutral-50 p-3.5 rounded-xl border border-neutral-300 space-y-2.5 text-xs">
             {/* Visual Hazards */}
             <div>
-              <span className="text-[11px] font-semibold text-slate-400 block mb-1">Detected Visual Hazards:</span>
+              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block mb-1">Detected Visual Hazards:</span>
               <div className="flex flex-wrap gap-1.5">
                 {incident.triage_trace?.visual_hazard_factors?.length ? (
                   incident.triage_trace.visual_hazard_factors.map((h, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700">
+                    <span key={i} className="px-2 py-0.5 rounded-md bg-white text-neutral-900 border border-neutral-300 font-medium">
                       {h}
                     </span>
                   ))
                 ) : (
-                  <span className="text-slate-500">Hazard assessment standard</span>
+                  <span className="text-neutral-500">Hazard assessment standard</span>
                 )}
               </div>
             </div>
 
             {/* Monsoon Multiplier */}
-            <div className="flex items-center justify-between py-1 border-t border-slate-800/60 text-slate-300">
-              <span className="text-slate-400">Monsoon Risk Multiplier:</span>
-              <span className={incident.triage_trace?.monsoon_multiplier ? 'text-amber-400 font-bold' : 'text-slate-500'}>
+            <div className="flex items-center justify-between py-1 border-t border-neutral-200 text-neutral-700">
+              <span className="text-neutral-500 font-semibold">Monsoon Risk Multiplier:</span>
+              <span className={incident.triage_trace?.monsoon_multiplier ? 'text-rose-600 font-bold' : 'text-neutral-500'}>
                 {incident.triage_trace?.monsoon_multiplier ? 'Active (Precipitation / Submergence)' : 'None'}
               </span>
             </div>
 
             {/* Jurisdiction Rationale */}
             {incident.triage_trace?.jurisdiction_rationale && (
-              <div className="pt-1 border-t border-slate-800/60">
-                <span className="text-slate-400 block mb-0.5">Jurisdiction Rationale:</span>
-                <p className="text-slate-300 italic">{incident.triage_trace.jurisdiction_rationale}</p>
+              <div className="pt-1 border-t border-neutral-200">
+                <span className="text-neutral-500 font-semibold block mb-0.5">Jurisdiction Rationale:</span>
+                <p className="text-neutral-700 italic">{incident.triage_trace.jurisdiction_rationale}</p>
               </div>
             )}
           </div>
@@ -232,20 +232,20 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
         {/* 3. Consolidated Citizen Reports & Merged Crowd Count */}
         <div className="space-y-3 pt-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+            <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900">
               Consolidated Citizen Reports
             </h3>
-            <span className="text-xs font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+            <span className="text-xs font-bold text-neutral-900 bg-neutral-100 px-2 py-0.5 rounded border border-neutral-300">
               👥 {incident.community_impact_score} Citizens Merged
             </span>
           </div>
 
-          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-2">
-            <p className="text-slate-200">{incident.description_standardized_en}</p>
+          <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-300 text-xs space-y-2">
+            <p className="text-neutral-800 leading-relaxed">{incident.description_standardized_en}</p>
             {incident.location?.landmark && (
-              <p className="text-slate-400">📍 Landmark: {incident.location.landmark}</p>
+              <p className="text-neutral-500 font-mono">📍 Landmark: {incident.location.landmark}</p>
             )}
-            <p className="text-[11px] text-slate-500 font-mono">
+            <p className="text-[11px] text-neutral-400 font-mono">
               Created: {new Date(incident.created_at).toLocaleString()} • SLA Target: {new Date(incident.sla_deadline).toLocaleString()}
             </p>
           </div>
@@ -253,19 +253,19 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
 
         {/* 4. Human-in-the-Loop Override & Status Controls */}
         <div className="space-y-3 pt-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
-            <Wrench className="w-4 h-4 text-indigo-400" />
-            Human-in-the-Loop Administrative Override
+          <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900 flex items-center gap-1.5">
+            <Wrench className="w-4 h-4 text-neutral-700" />
+            Supervisor Administrative Override
           </h3>
 
-          <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-3 text-xs">
+          <div className="bg-neutral-50 p-3.5 rounded-xl border border-neutral-300 space-y-3 text-xs">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] text-slate-400 font-semibold">Department / Agency</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Department</label>
                 <select
                   value={overrideAgency}
                   onChange={(e) => setOverrideAgency(e.target.value as IndianAgency)}
-                  className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 mt-1 focus:outline-none"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 rounded-lg p-2 mt-1 focus:outline-none focus:border-black"
                 >
                   {INDIAN_AGENCIES.map((a) => (
                     <option key={a} value={a}>{a}</option>
@@ -274,11 +274,11 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] text-slate-400 font-semibold">Priority Severity</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Priority</label>
                 <select
                   value={overridePriority}
                   onChange={(e) => setOverridePriority(e.target.value as PriorityTier)}
-                  className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 mt-1 focus:outline-none"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 rounded-lg p-2 mt-1 focus:outline-none focus:border-black"
                 >
                   {PRIORITY_TIERS.map((p) => (
                     <option key={p} value={p}>{p}</option>
@@ -289,11 +289,11 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] text-slate-400 font-semibold">Ticket Status</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Status</label>
                 <select
                   value={overrideStatus}
                   onChange={(e) => setOverrideStatus(e.target.value as IncidentStatus)}
-                  className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 mt-1 focus:outline-none"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 rounded-lg p-2 mt-1 focus:outline-none focus:border-black"
                 >
                   {['REPORTED', 'TRIAGED', 'IN_PROGRESS', 'PENDING_VERIFICATION', 'RESOLVED', 'REOPENED'].map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -302,38 +302,38 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] text-slate-400 font-semibold">Ward ID</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Ward ID</label>
                 <input
                   type="text"
                   value={overrideWard}
                   onChange={(e) => setOverrideWard(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 mt-1 focus:outline-none"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 rounded-lg p-2 mt-1 focus:outline-none focus:border-black"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-[11px] text-slate-400 font-semibold">Supervisor Audit Log / Override Reason</label>
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Supervisor Override Reason</label>
               <input
                 type="text"
                 value={overrideNotes}
                 onChange={(e) => setOverrideNotes(e.target.value)}
-                placeholder="e.g. Reassigned to PWD as 100ft road is state corridor"
-                className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 mt-1 focus:outline-none"
+                placeholder="e.g. Reassigned to PWD as 100ft road is state arterial corridor"
+                className="w-full bg-white border border-neutral-300 text-neutral-900 rounded-lg p-2 mt-1 focus:outline-none focus:border-black"
               />
             </div>
 
             <button
               onClick={handleSaveOverride}
               disabled={isSavingOverride}
-              className="w-full py-2.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition"
+              className="w-full py-2.5 px-4 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition active:translate-y-0.5"
             >
               {isSavingOverride ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-              Save Administrative Override
+              <span>Save Administrative Override</span>
             </button>
 
             {overrideSuccess && (
-              <p className="text-emerald-400 text-center font-bold text-[11px]">
+              <p className="text-emerald-700 text-center font-bold text-[11px]">
                 ✓ Override saved successfully!
               </p>
             )}
@@ -343,18 +343,18 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
         {/* 5. One-Click AI Field Work Order Generator */}
         <div className="space-y-3 pt-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900 flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-neutral-700" />
               1-Click AI Field Work Order
             </h3>
 
             {workOrder && (
               <button
                 onClick={handleCopyWorkOrder}
-                className="text-xs text-emerald-300 hover:text-white flex items-center gap-1 font-semibold"
+                className="text-xs text-neutral-700 hover:text-black flex items-center gap-1 font-bold"
               >
-                {copiedWorkOrder ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                {copiedWorkOrder ? 'Copied!' : 'Copy Brief'}
+                {copiedWorkOrder ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                <span>{copiedWorkOrder ? 'Copied!' : 'Copy Brief'}</span>
               </button>
             )}
           </div>
@@ -363,35 +363,35 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
             <button
               onClick={handleGenerateWorkOrder}
               disabled={isGeneratingWorkOrder}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-950 transition"
+              className="w-full py-3 px-5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition active:translate-y-0.5"
             >
               {isGeneratingWorkOrder ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating technical dispatch brief with Gemini...
+                  <span>Generating technical dispatch brief with Gemini...</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 text-amber-300" />
-                  Generate Field Work Order
+                  <span>Generate Field Work Order</span>
                 </>
               )}
             </button>
           ) : (
-            <div className="bg-slate-950 p-4 rounded-xl border border-emerald-500/30 text-xs space-y-3 animate-fade-in">
+            <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-300 text-xs space-y-3 animate-fade-in">
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block mb-0.5">Probable Root Cause:</span>
-                <p className="text-slate-200">{workOrder.probable_root_cause}</p>
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-0.5">Probable Root Cause:</span>
+                <p className="text-neutral-900 font-medium">{workOrder.probable_root_cause}</p>
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block mb-0.5">Recommended Crew Composition:</span>
-                <p className="text-emerald-300 font-semibold">{workOrder.recommended_crew_size}</p>
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-0.5">Recommended Crew Size:</span>
+                <p className="text-neutral-950 font-bold">{workOrder.recommended_crew_size}</p>
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-slate-400 block mb-1">Equipment & Heavy Machinery:</span>
-                <ul className="list-disc list-inside space-y-0.5 text-slate-300">
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Equipment Required:</span>
+                <ul className="list-disc list-inside space-y-0.5 text-neutral-800 font-medium">
                   {workOrder.required_equipment.map((e, idx) => (
                     <li key={idx}>{e}</li>
                   ))}
@@ -399,8 +399,8 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
               </div>
 
               <div>
-                <span className="text-[11px] font-bold text-amber-400 block mb-1">Safety & Hazard Precautions:</span>
-                <ul className="list-disc list-inside space-y-0.5 text-slate-300">
+                <span className="text-[10px] font-bold text-rose-600 uppercase tracking-widest block mb-1">Safety & Hazard Precautions:</span>
+                <ul className="list-disc list-inside space-y-0.5 text-neutral-800 font-medium">
                   {workOrder.safety_precautions.map((s, idx) => (
                     <li key={idx}>{s}</li>
                   ))}
@@ -412,35 +412,35 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
 
         {/* 6. Closed-Loop Resolution Audit Module */}
         <div className="space-y-3 pt-4 pb-8">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
-            <Camera className="w-4 h-4 text-teal-400" />
+          <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900 flex items-center gap-1.5">
+            <Camera className="w-4 h-4 text-neutral-700" />
             Closed-Loop Resolution Audit
           </h3>
 
-          <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-3 text-xs">
-            <p className="text-slate-400">
+          <div className="bg-neutral-50 p-3.5 rounded-xl border border-neutral-300 space-y-3 text-xs">
+            <p className="text-neutral-600">
               Upload contractor completion "After" photo. Gemini will conduct a dual-image forensic comparison to prevent fake closures.
             </p>
 
             {/* Photo dropzone */}
             {afterPhotoPreview ? (
-              <div className="relative rounded-lg overflow-hidden border border-slate-700 h-36">
+              <div className="relative rounded-lg overflow-hidden border border-neutral-300 h-36 bg-neutral-200">
                 <img src={afterPhotoPreview} alt="After repair preview" className="w-full h-full object-cover" />
                 <button
                   onClick={() => {
                     setAfterPhotoFile(null);
                     setAfterPhotoPreview(null);
                   }}
-                  className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-950/80 text-white"
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-neutral-950/80 text-white"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-700 hover:border-teal-500/60 rounded-xl cursor-pointer bg-slate-900/60 transition text-center">
-                <Upload className="w-6 h-6 text-slate-400 mb-1" />
-                <span className="text-xs font-semibold text-slate-200">Upload Contractor "After" Photo</span>
-                <span className="text-[10px] text-slate-500 mt-0.5">GPS auto-defaults to incident coordinates</span>
+              <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-neutral-300 hover:border-black rounded-xl cursor-pointer bg-white transition text-center">
+                <Upload className="w-6 h-6 text-neutral-500 mb-1" />
+                <span className="text-xs font-bold text-neutral-900 uppercase tracking-wide">Upload Contractor "After" Photo</span>
+                <span className="text-[10px] text-neutral-400 mt-0.5">Dual-image AI forensic validation</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -458,23 +458,23 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] text-slate-400 font-semibold">Contractor ID</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Contractor ID</label>
                 <input
                   type="text"
                   value={contractorId}
                   onChange={(e) => setContractorId(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 mt-1 focus:outline-none"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 rounded-lg p-2 mt-1 focus:outline-none focus:border-black"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] text-slate-400 font-semibold">Closure Notes</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Closure Notes</label>
                 <input
                   type="text"
                   value={closureNotes}
                   onChange={(e) => setClosureNotes(e.target.value)}
                   placeholder="e.g. Asphalting completed"
-                  className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-2 mt-1 focus:outline-none"
+                  className="w-full bg-white border border-neutral-300 text-neutral-900 rounded-lg p-2 mt-1 focus:outline-none focus:border-black"
                 />
               </div>
             </div>
@@ -482,17 +482,17 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
             <button
               onClick={handleAuditSubmit}
               disabled={!afterPhotoFile || isAuditing}
-              className="w-full py-2.5 px-3 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 transition"
+              className="w-full py-2.5 px-4 rounded-full bg-neutral-950 hover:bg-neutral-800 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition active:translate-y-0.5"
             >
               {isAuditing ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Running Gemini Dual-Image Forensic Audit...
+                  <span>Running Gemini Dual-Image Forensic Audit...</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                  Submit for AI Verification
+                  <span>Submit for AI Verification</span>
                 </>
               )}
             </button>
@@ -501,8 +501,8 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
             {auditResult && (
               <div className={`p-3.5 rounded-xl border text-xs space-y-1.5 animate-fade-in ${
                 auditResult.audit_status === 'VERIFIED_FIXED'
-                  ? 'bg-teal-500/10 border-teal-500/30 text-teal-300'
-                  : 'bg-red-500/10 border-red-500/30 text-red-300'
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                  : 'bg-rose-50 border-rose-300 text-rose-900'
               }`}>
                 <div className="flex items-center justify-between font-bold">
                   <span>Audit Verdict: {auditResult.audit_status}</span>
@@ -510,7 +510,7 @@ export const TriageDrawer: React.FC<TriageDrawerProps> = ({
                 </div>
                 <p>{auditResult.evidence_notes}</p>
                 {auditResult.citizen_reopen_window_expires && (
-                  <p className="text-teal-200/80 font-mono text-[11px]">
+                  <p className="text-emerald-800 font-mono text-[11px]">
                     48h Citizen Reopen Window Active until: {new Date(auditResult.citizen_reopen_window_expires).toLocaleString()}
                   </p>
                 )}

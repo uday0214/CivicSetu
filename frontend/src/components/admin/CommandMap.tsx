@@ -149,17 +149,17 @@ export const CommandMap: React.FC<CommandMapProps> = ({
   }, [selectedIncident]);
 
   return (
-    <div className="w-full h-full relative overflow-hidden bg-slate-950">
+    <div className="w-full h-full relative overflow-hidden bg-neutral-100">
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
       {/* Floating Map Controls (Top-Right) */}
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-1.5 rounded-xl shadow-2xl">
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 bg-white/95 backdrop-blur-xs border border-neutral-300 p-1 rounded-full shadow-sm">
         <button
           onClick={() => setMapMode('pins')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+          className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
             mapMode === 'pins'
-              ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-950'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-neutral-950 text-white shadow-xs'
+              : 'text-neutral-600 hover:text-black'
           }`}
         >
           <MapPin className="w-3.5 h-3.5" />
@@ -168,30 +168,30 @@ export const CommandMap: React.FC<CommandMapProps> = ({
 
         <button
           onClick={() => setMapMode('hotspots')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition ${
+          className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
             mapMode === 'hotspots'
-              ? 'bg-orange-500 text-slate-950 shadow-md shadow-orange-950'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-neutral-950 text-white shadow-xs'
+              : 'text-neutral-600 hover:text-black'
           }`}
         >
-          <Flame className="w-3.5 h-3.5" />
+          <Flame className="w-3.5 h-3.5 text-rose-500" />
           <span>Impact Hotspots</span>
         </button>
       </div>
 
       {/* Map Legend Overlay (Bottom-Right) */}
-      <div className="absolute bottom-4 right-4 z-10 bg-slate-900/90 backdrop-blur-md border border-slate-800 px-3 py-2 rounded-xl text-[11px] text-slate-300 flex items-center gap-3 shadow-xl">
+      <div className="absolute bottom-4 right-4 z-10 bg-white/95 backdrop-blur-xs border border-neutral-300 px-3.5 py-1.5 rounded-full text-[11px] font-mono font-bold text-neutral-700 flex items-center gap-3 shadow-sm">
         <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> P0 Critical
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> P0
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-orange-500" /> P1 High
+          <span className="w-2.5 h-2.5 rounded-full bg-orange-500" /> P1
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" /> P2 Medium
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> P2
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> P3 Low
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> P3
         </span>
       </div>
     </div>

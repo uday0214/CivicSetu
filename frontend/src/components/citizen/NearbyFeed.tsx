@@ -128,23 +128,23 @@ export const NearbyFeed: React.FC<NearbyFeedProps> = ({ onUpvoteSuccess }) => {
   }, [viewMode, filteredIncidents]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 space-y-4 animate-fade-in pb-16">
+    <div className="w-full max-w-2xl mx-auto space-y-4 animate-fade-in pb-12">
       {/* Top Header & View Toggle */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-cyan-400" />
-            Nearby Civic Issues & Public Feed
+          <h2 className="text-sm font-black text-neutral-950 flex items-center gap-2 uppercase tracking-wide">
+            <MapPin className="w-4 h-4 text-neutral-900" />
+            Nearby Public Feed
           </h2>
-          <p className="text-xs text-slate-400">Real-time public transparency for your ward</p>
+          <p className="text-[11px] text-neutral-500 font-mono">Ward transparency & deduplicated reports</p>
         </div>
 
         {/* View Toggle */}
-        <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1">
+        <div className="flex items-center bg-neutral-100 border border-neutral-300 rounded-full p-1">
           <button
             onClick={() => setViewMode('map')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
-              viewMode === 'map' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
+              viewMode === 'map' ? 'bg-neutral-950 text-white shadow-sm' : 'text-neutral-600 hover:text-black'
             }`}
           >
             <MapIcon className="w-3.5 h-3.5" />
@@ -152,8 +152,8 @@ export const NearbyFeed: React.FC<NearbyFeedProps> = ({ onUpvoteSuccess }) => {
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
-              viewMode === 'list' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
+              viewMode === 'list' ? 'bg-neutral-950 text-white shadow-sm' : 'text-neutral-600 hover:text-black'
             }`}
           >
             <List className="w-3.5 h-3.5" />
@@ -168,10 +168,10 @@ export const NearbyFeed: React.FC<NearbyFeedProps> = ({ onUpvoteSuccess }) => {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-full font-medium shrink-0 transition ${
+            className={`px-3.5 py-1.5 rounded-full font-bold text-[11px] tracking-wide shrink-0 transition ${
               selectedCategory === cat
-                ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950'
-                : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'
+                ? 'bg-neutral-950 text-white shadow-sm'
+                : 'bg-white text-neutral-700 border border-neutral-300 hover:border-black'
             }`}
           >
             {cat}
@@ -181,11 +181,11 @@ export const NearbyFeed: React.FC<NearbyFeedProps> = ({ onUpvoteSuccess }) => {
 
       {/* Map View */}
       {viewMode === 'map' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative">
+        <div className="bg-white border border-neutral-300 rounded-2xl overflow-hidden shadow-sm relative">
           <div ref={mapContainerRef} className="w-full h-96 z-0" />
-          <div className="p-3 bg-slate-950/90 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+          <div className="p-3 bg-neutral-50 border-t border-neutral-200 text-xs text-neutral-600 flex items-center justify-between font-mono">
             <span>Showing {filteredIncidents.length} active tickets nearby</span>
-            <span className="text-[11px] text-slate-500">Tap pin to view issue & upvote</span>
+            <span className="text-[11px] text-neutral-500">Tap pin to view issue & upvote</span>
           </div>
         </div>
       )}
@@ -194,7 +194,7 @@ export const NearbyFeed: React.FC<NearbyFeedProps> = ({ onUpvoteSuccess }) => {
       {viewMode === 'list' && (
         <div className="space-y-3">
           {filteredIncidents.length === 0 ? (
-            <div className="p-8 text-center bg-slate-900 rounded-2xl border border-slate-800 text-slate-400 text-xs">
+            <div className="p-8 text-center bg-white rounded-2xl border border-neutral-300 text-neutral-500 text-xs font-medium">
               No civic issues matching "{selectedCategory}" in this area.
             </div>
           ) : (
@@ -203,34 +203,34 @@ export const NearbyFeed: React.FC<NearbyFeedProps> = ({ onUpvoteSuccess }) => {
               return (
                 <div
                   key={inc.incident_id}
-                  className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 shadow-xl transition space-y-3"
+                  className="bg-white border border-neutral-200 hover:border-neutral-900 rounded-2xl p-4 shadow-sm transition space-y-3"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-mono text-cyan-400">{inc.incident_id}</span>
-                        <span className={`px-2 py-0.5 text-[11px] font-bold rounded-md border ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border}`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-mono font-bold text-neutral-900">{inc.incident_id}</span>
+                        <span className={`px-2 py-0.5 text-[10px] font-black rounded border uppercase ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border}`}>
                           {inc.priority}
                         </span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-neutral-100 text-neutral-700 font-bold border border-neutral-200">
                           {inc.category}
                         </span>
                       </div>
-                      <h4 className="text-sm font-bold text-white">{inc.title}</h4>
+                      <h4 className="text-sm font-black text-neutral-950">{inc.title}</h4>
                     </div>
 
-                    <span className="text-[11px] px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700">
+                    <span className="text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider bg-neutral-100 text-neutral-700 border border-neutral-200">
                       {inc.status}
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-300 line-clamp-2">{inc.description_standardized_en}</p>
+                  <p className="text-xs text-neutral-600 line-clamp-2 leading-relaxed">{inc.description_standardized_en}</p>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
-                    <div className="flex items-center gap-3 text-slate-400">
-                      <span className="flex items-center gap-1 text-amber-300 font-semibold">
-                        <Users className="w-3.5 h-3.5" />
-                        {inc.community_impact_score} supporters
+                  <div className="flex items-center justify-between pt-2.5 border-t border-neutral-100 text-xs">
+                    <div className="flex items-center gap-3 text-neutral-500 font-medium text-[11px]">
+                      <span className="flex items-center gap-1 font-bold text-neutral-900">
+                        <Users className="w-3.5 h-3.5 text-neutral-700" />
+                        {inc.community_impact_score} citizens impacted
                       </span>
                       <span>•</span>
                       <span>{inc.ward_id}</span>
@@ -239,10 +239,10 @@ export const NearbyFeed: React.FC<NearbyFeedProps> = ({ onUpvoteSuccess }) => {
                     <button
                       onClick={() => handleUpvote(inc.incident_id)}
                       disabled={upvotingId === inc.incident_id}
-                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-600/20 hover:text-emerald-300 text-slate-200 border border-slate-700 hover:border-emerald-500/40 text-xs font-semibold flex items-center gap-1.5 transition"
+                      className="px-3.5 py-1.5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white text-[11px] font-bold tracking-wide flex items-center gap-1.5 transition active:translate-y-0.5"
                     >
-                      <ThumbsUp className="w-3.5 h-3.5" />
-                      Me Too (+1)
+                      <ThumbsUp className="w-3 h-3" />
+                      <span>Me Too (+1)</span>
                     </button>
                   </div>
                 </div>

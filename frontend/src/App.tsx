@@ -14,7 +14,7 @@ import {
   KpiSummaryResponse,
   SystemicBriefingResponse,
 } from './types/api';
-import { CheckCircle2, Camera, MapPin, Clock, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 
 export function App() {
   const [activeRole, setActiveRole] = useState<'citizen' | 'admin'>('citizen');
@@ -102,78 +102,184 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-white text-neutral-950 font-sans selection:bg-neutral-900 selection:text-white">
       <TopNav
         activeRole={activeRole}
         onRoleChange={setActiveRole}
         onResetDemo={handleResetDemo}
         isFallback={systemStatus?.gemini?.fallback_circuit_breaker_enabled && !systemStatus?.gemini?.configured}
+        activeTab={citizenTab}
+        onTabChange={setCitizenTab}
       />
 
       {/* Temporary Toast for Reset Action */}
       {resetMessage && (
-        <div className="fixed top-16 right-4 z-50 bg-slate-900 text-white text-xs px-3 py-2 rounded-md shadow-lg border border-slate-700 flex items-center space-x-2 animate-bounce">
+        <div className="fixed top-20 right-6 z-50 bg-neutral-950 text-white text-xs px-4 py-2.5 rounded-full shadow-2xl border border-neutral-800 flex items-center space-x-2 animate-bounce">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>{resetMessage}</span>
+          <span className="font-medium">{resetMessage}</span>
         </div>
       )}
 
       {/* Main Container Switch */}
       <main className="flex-1 min-h-0 flex flex-col">
         {activeRole === 'citizen' ? (
-          /* Mobile-First Citizen Shell Container */
-          <div className="max-w-xl w-full mx-auto flex flex-col min-h-[calc(100vh-56px)]">
-            {/* Top Sub-Nav Tabs */}
-            <div className="p-3 sticky top-14 z-30 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
-              <div className="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
-                <button
-                  onClick={() => setCitizenTab('report')}
-                  className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 transition ${
-                    citizenTab === 'report'
-                      ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-950'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Report</span>
-                </button>
+          /* Editorial Split-Layout Matching Reference Image */
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Top Grid: Hero (Left) + Interactive Console (Right) */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 border-b border-neutral-900">
+              {/* Left Column (7 cols): Editorial Typography & Actions */}
+              <div className="lg:col-span-6 xl:col-span-7 p-8 sm:p-12 lg:p-16 flex flex-col justify-between bg-white">
+                <div>
+                  <div className="flex items-center gap-2 text-neutral-900 font-mono text-sm uppercase tracking-widest font-bold">
+                    <span>✦</span>
+                    <span>AI-Powered Urban Governance</span>
+                  </div>
 
-                <button
-                  onClick={() => setCitizenTab('feed')}
-                  className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 transition ${
-                    citizenTab === 'feed'
-                      ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-950'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>Nearby Feed</span>
-                </button>
+                  <h1 className="text-4xl sm:text-5xl xl:text-6xl font-black tracking-tight text-neutral-950 leading-[1.06] mt-6 max-w-xl">
+                    Civic issue reporting for modern cities
+                  </h1>
 
-                <button
-                  onClick={() => setCitizenTab('my-reports')}
-                  className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 transition ${
-                    citizenTab === 'my-reports'
-                      ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-950'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>My Reports</span>
-                </button>
+                  <p className="text-sm sm:text-base text-neutral-600 mt-6 max-w-lg leading-relaxed font-normal">
+                    Report potholes, garbage overflow, or waterlogging in seconds. Snap a photo or speak naturally in <strong>Hindi, Kannada, Hinglish, or English</strong>. Gemini 2.5 extracts landmarks, deduplicates tickets, and dispatches field teams.
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-4 mt-8 sm:mt-10">
+                    <button
+                      onClick={() => setCitizenTab('report')}
+                      className={`px-8 py-3.5 rounded-full text-xs font-black tracking-widest uppercase transition-all shadow-sm active:translate-y-0.5 ${
+                        citizenTab === 'report'
+                          ? 'bg-black text-white hover:bg-neutral-800'
+                          : 'bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-black'
+                      }`}
+                    >
+                      Report An Issue
+                    </button>
+
+                    <button
+                      onClick={() => setCitizenTab(citizenTab === 'feed' ? 'report' : 'feed')}
+                      className="flex items-center gap-2.5 px-6 py-3.5 rounded-full text-xs font-bold tracking-wider uppercase text-neutral-900 hover:text-black border border-neutral-300 hover:border-black transition active:translate-y-0.5"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-neutral-950 text-white flex items-center justify-center text-[9px]">
+                        ▶
+                      </div>
+                      <span>{citizenTab === 'feed' ? 'Intake Form' : 'Explore Live Map'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-12 pt-6 border-t border-neutral-100">
+                  <p className="text-xs font-medium text-neutral-600 flex items-center gap-2">
+                    <span className="text-rose-600 font-black text-base">*</span>
+                    <span>
+                      48-hour citizen review guarantee with automated Gemini Before/After verification audit.
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column (5-6 cols): Interactive Workspace Framed by 1px Vertical Border */}
+              <div className="lg:col-span-6 xl:col-span-5 border-t lg:border-t-0 lg:border-l border-neutral-900 bg-neutral-50/70 flex flex-col min-h-0 overflow-y-auto">
+                {/* Clean Tab Segment Switcher */}
+                <div className="p-3 bg-white border-b border-neutral-200 sticky top-0 z-20 flex items-center justify-between">
+                  <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-full border border-neutral-200 text-xs font-bold w-full sm:w-auto">
+                    <button
+                      onClick={() => setCitizenTab('report')}
+                      className={`flex-1 sm:flex-initial py-1.5 px-4 rounded-full transition ${
+                        citizenTab === 'report'
+                          ? 'bg-neutral-950 text-white shadow-sm'
+                          : 'text-neutral-600 hover:text-black'
+                      }`}
+                    >
+                      1. Snap & Speak
+                    </button>
+
+                    <button
+                      onClick={() => setCitizenTab('feed')}
+                      className={`flex-1 sm:flex-initial py-1.5 px-4 rounded-full transition ${
+                        citizenTab === 'feed'
+                          ? 'bg-neutral-950 text-white shadow-sm'
+                          : 'text-neutral-600 hover:text-black'
+                      }`}
+                    >
+                      2. Live Map
+                    </button>
+
+                    <button
+                      onClick={() => setCitizenTab('my-reports')}
+                      className={`flex-1 sm:flex-initial py-1.5 px-4 rounded-full transition ${
+                        citizenTab === 'my-reports'
+                          ? 'bg-neutral-950 text-white shadow-sm'
+                          : 'text-neutral-600 hover:text-black'
+                      }`}
+                    >
+                      3. Audit Log
+                    </button>
+                  </div>
+                </div>
+
+                {/* Workspace Dynamic Content */}
+                <div className="flex-1 p-4 sm:p-6">
+                  {citizenTab === 'report' && <SnapSpeakForm onReportSubmitted={handleReportSubmitted} />}
+                  {citizenTab === 'feed' && <NearbyFeed />}
+                  {citizenTab === 'my-reports' && <MyReportsList />}
+                </div>
               </div>
             </div>
 
-            {/* Tab Contents */}
-            <div className="flex-1">
-              {citizenTab === 'report' && <SnapSpeakForm onReportSubmitted={handleReportSubmitted} />}
-              {citizenTab === 'feed' && <NearbyFeed />}
-              {citizenTab === 'my-reports' && <MyReportsList />}
+            {/* Bottom 4-Column Metric Strip Matching Reference Image */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 bg-white divide-y lg:divide-y-0 divide-x divide-neutral-900 border-b border-neutral-900 select-none">
+              {/* Metric 1 */}
+              <div className="p-5 sm:p-6 flex items-center gap-4">
+                <div className="flex -space-x-2 overflow-hidden">
+                  <span className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-neutral-800 text-white font-bold text-[10px] flex items-center justify-center">
+                    KA
+                  </span>
+                  <span className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-neutral-600 text-white font-bold text-[10px] flex items-center justify-center">
+                    DL
+                  </span>
+                  <span className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-neutral-400 text-white font-bold text-[10px] flex items-center justify-center">
+                    MH
+                  </span>
+                </div>
+                <div>
+                  <div className="text-xl sm:text-2xl font-black text-neutral-950 leading-none">34k+</div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mt-1">
+                    Verified Resolutions
+                  </div>
+                </div>
+              </div>
+
+              {/* Metric 2 */}
+              <div className="p-5 sm:p-6">
+                <div className="text-xl sm:text-2xl font-black text-neutral-950 leading-none">18.5h</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mt-1">
+                  Avg SLA Closure Time
+                </div>
+              </div>
+
+              {/* Metric 3 */}
+              <div className="p-5 sm:p-6">
+                <div className="text-xl sm:text-2xl font-black text-neutral-950 leading-none">96.4%</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mt-1">
+                  AI Audit Accuracy
+                </div>
+              </div>
+
+              {/* Metric 4: Agency Logos / Badges */}
+              <div className="p-5 sm:p-6 flex items-center justify-around gap-2 text-xs font-mono font-bold uppercase tracking-wider text-neutral-600">
+                <span className="hover:text-black transition">BBMP</span>
+                <span className="text-neutral-300">•</span>
+                <span className="hover:text-black transition">BESCOM</span>
+                <span className="text-neutral-300">•</span>
+                <span className="hover:text-black transition">BWSSB</span>
+                <span className="text-neutral-300">•</span>
+                <span className="hover:text-black transition">NHAI</span>
+              </div>
             </div>
           </div>
         ) : (
-          /* Desktop-First Admin Command Center Workspace */
-          <div className="w-full h-[calc(100vh-56px)] overflow-hidden flex flex-col bg-slate-950">
+          /* Desktop-First Admin Command Center Workspace in Light Theme */
+          <div className="w-full h-[calc(100vh-64px)] overflow-hidden flex flex-col bg-neutral-50">
             {/* Top Operational KPI Strip */}
             {adminKpi && (
               <KpiStrip
@@ -191,9 +297,9 @@ export function App() {
             )}
 
             {/* Split Screen Workspace: Map + Queue */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 relative">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 relative border-b border-neutral-900">
               {isLoadingAdmin && (
-                <div className="absolute inset-0 z-40 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center gap-2 text-indigo-400 text-xs font-semibold">
+                <div className="absolute inset-0 z-40 bg-white/80 backdrop-blur-sm flex items-center justify-center gap-2 text-neutral-900 text-xs font-bold">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Loading Municipal Command Data...</span>
                 </div>
@@ -209,7 +315,7 @@ export function App() {
               </div>
 
               {/* Right Column (5 cols): Triage Ticket Queue */}
-              <div className="lg:col-span-5 h-full min-h-0 overflow-hidden">
+              <div className="lg:col-span-5 h-full min-h-0 overflow-hidden border-l border-neutral-900 bg-white">
                 <TicketQueue
                   incidents={adminIncidents}
                   selectedIncident={selectedIncident}
