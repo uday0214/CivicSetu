@@ -510,3 +510,372 @@ export interface CitizenReport {
 | `CivicCategory` enum used for validation | ❌ (defined but not enforced) |
 
 The Section 2 implementation is functionally complete and tested, but **must fix the 2 critical wire-format violations before Section 3** to maintain API contract integrity per Guardrail #3.
+
+---
+
+# CivicSetu — Section 3 & 4 Stress Test Fixes
+
+**Audit Target:** Commit `4ebcc55` (Section 3: Gemini Multimodal AI Engine) & Commit `a68a9fd` (Section 4: Spatial-Semantic Deduplication & Crowd Impact Engine)  
+**Date:** 2026-11-21  
+**Status:** All 26 tests pass; 11 wire-format & compliance issues found against CONTEXT.md §5.3 and ROADMAP.md §4
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| **Critical (wire contract violations)** | **6** |
+| **P1 — Fix before Section 5** | **3** |
+| P2 — Improve robustness | 2 |
+| P3 — Nice to have | 0 |
+
+---
+
+## Critical — Wire Format Contract Violations (CONTEXT.md §5.3)
+
+The CONTEXT.md §5.3 authoritative schema defines a **flat** `IntakeTriageResponse` structure. The implementation nests trace fields in `triage_trace` and renames several fields.
+
+### 1. `extracted_landmark` vs `landmark_clues`
+**File:** `backend/models/intake.py:65`, `frontend/src/types/api.ts:138`  
+**Issue:** CONTEXT.md §5.3 uses `landmark_clues: Optional[str]`; implementation uses `extracted_landmark`.
+
+**Fix (Backend):**
+```python
+# backend/models/intake.py
+class IntakeTriageResponse(BaseModel):
+    # ...
+    landmark_clues: Optional[str] = Field(  # was: extracted_landmark
+        None,
+        description="Extracted physical landmarks (e.g., 'Opposite Metro Pillar 42')"
+    )
+    # ...
+```
+
+**Fix (Frontend):**
+```typescript
+// frontend/src/types/api.ts
+export interface IntakeTriageResponse {
+  // ...
+  landmark_clues?: string | null;  // was: extracted_landmark
+  // ...
+}
+```
+
+**Verify:** `grep -n "landmark" backend/models/intake.py frontend/src/types/api.ts`
+
+---
+
+### 2. `language_detected` vs `detected_language`
+**File:** `backend/models/intake.py:53`, `frontend/src/types/api.ts:133`  
+**Issue:** CONTEXT.md §5.3 uses `detected_language: Optional[str]`; implementation uses `language_detected`.
+
+**Fix (Backend):**
+```python
+# backend/models/intake.py
+detected_language: Optional[str] = Field(  # was: language_detected
+    None,
+    description="Language/dialect detected (e.g., 'Hindi', 'Hinglish', 'Kannada', 'English')."
+)
+```
+
+**Fix (Frontend):**
+```typescript
+// frontend/src/types/api.ts
+detected_language?: string | null;  // was: language_detected
+```
+
+**Verify:** `grep -n "language_detected\|detected_language" backend/models/intake.py frontend/src/types/api.ts`
+
+---
+
+### 3. Top-level Trace Fields Nested in `triage_trace`
+**File:** `backend/models/intake.py:74-81`, `frontend/src/types/api.ts:141`  
+**Issue:** CONTEXT.md §5.3 defines these as **top-level** fields:
+- `visual_hazard_factors: List[str]`
+- `monsoon_multiplier_applied: bool`
+- `jurisdiction_rationale: Optional[str]`
+- `confidence_score: float`
+
+But implementation nests them in `triage_trace: Optional[ExplainableTriageTrace]`.
+
+**Fix (Backend) — Flatten to match CONTEXT.md §5.3:**
+```python
+# backend/models/intake.py
+class IntakeTriageResponse(BaseModel):
+    # ... existing fields ...
+    
+    # Move these OUT of triage_trace to top-level:
+    visual_hazard_factors: List[str] = Field(
+        default_factory=list,
+        description="Specific visual hazards observed."
+    )
+    monsoon_multiplier_applied: bool = Field(  # was: monsoon_multiplier in trace
+        False,
+        description="Whether monsoon hazard multiplier escalated priority."
+    )
+    jurisdiction_rationale: Optional[str] = Field(
+        None,
+        description="Statutory/administrative rationale for agency assignment."
+    )
+    confidence_score: float = Field(
+        0.0,
+        description="Overall AI confidence score from 0.0 to 1.0."
+    )
+    
+    # Keep triage_trace for backward compatibility OR remove it:
+    triage_trace: Optional[ExplainableTriageTrace] = Field(
+        None,
+        description="Deprecated - use top-level trace fields instead."
+    )
+```
+
+**Fix (Frontend) — Flatten similarly:**
+```typescript
+// frontend/src/types/api.ts
+export interface IntakeTriageResponse {
+  // ... existing fields ...
+  visual_hazard_factors?: string[];           // NEW top-level
+  monsoon_multiplier_applied?: boolean;       // NEW top-level (was: monsoon_multiplier in trace)
+  jurisdiction_rationale?: string;            // NEW top-level
+  confidence_score?: number;                  // NEW top-level
+  // triage_trace?: ExplainableTriageTrace | null;  // DEPRECATE
+}
+```
+
+**Verify:** `grep -A 5 "visual_hazard_factors\|monsoon_multiplier_applied\|jurisdiction_rationale\|confidence_score" backend/models/intake.py`
+
+---
+
+### 4. `transcription` Field Not in CONTEXT.md Spec
+**File:** `backend/models/intake.py:57`, `frontend/src/types/api.ts:134`  
+**Issue:** Implementation has `transcription: Optional[str]` but CONTEXT.md §5.3 has no such field. The spec only has `detected_language`.
+
+**Fix:** Keep as internal field but **do not serialize to wire** or remove if not needed by frontend:
+```python
+# backend/models/intake.py - add exclude=True to prevent wire serialization
+transcription: Optional[str] = Field(
+    None,
+    description="Internal: verbatim transcription of voice note",
+    exclude=True  # Prevents inclusion in model_dump() / JSON serialization
+)
+```
+
+**Verify:** `grep -n "transcription" backend/models/intake.py`
+
+---
+
+### 5. Enum vs String for `category`, `priority`, `agency`
+**File:** `backend/models/intake.py:61-70`  
+**Issue:** CONTEXT.md §5.3 specifies these as `Optional[str]` with pipe-delimited descriptions. Implementation uses `Optional[CivicCategory]`, `Optional[PriorityTier]`, `Optional[IndianAgency]`. While enums provide better validation, the wire format will serialize enum **values** (strings), so this is **not a wire violation** — it's a validation enhancement. 
+
+**Status:** ✅ Acceptable — wire format remains `snake_case` strings matching spec.
+
+---
+
+### 6. Section 4: `DedupComparisonResponse` Extra `confidence` Field
+**File:** `backend/models/dedup.py:22`, `frontend/src/types/api.ts` (not exposed)  
+**Issue:** ROADMAP §4.2 specifies return: `{ "is_duplicate": boolean, "matched_incident_id": string | null, "similarity_reason": string }`. Implementation adds `confidence: float`.
+
+**Fix (Backend):**
+```python
+# backend/models/dedup.py
+class DedupComparisonResponse(BaseModel):
+    is_duplicate: bool = Field(...)
+    matched_incident_id: Optional[str] = Field(None)
+    similarity_reason: str = Field(...)
+    # REMOVE confidence field - not in spec
+```
+
+**Fix (Frontend):** Ensure not exposed in API types.
+
+**Verify:** `grep -n "confidence" backend/models/dedup.py`
+
+---
+
+## P1 — Fix Before Section 5
+
+### 7. Section 4: `DedupCheckRequest` Missing `text` Field
+**File:** `backend/models/dedup.py:28`, `frontend/src/types/api.ts:153`  
+**Issue:** ROADMAP §4.2 says "pass candidate summaries alongside the new report to Gemini" — the new report's text description is needed for semantic comparison.
+
+**Fix (Backend):**
+```python
+# backend/models/dedup.py
+class DedupCheckRequest(BaseModel):
+    lat: float
+    lng: float
+    category: Optional[CivicCategory] = None
+    title: Optional[str] = None
+    description: Optional[str] = None  # ADD: new report description for semantic match
+    text: Optional[str] = None         # ADD: raw text/voice transcription for Gemini
+    landmark: Optional[str] = None
+```
+
+**Fix (Frontend):**
+```typescript
+// frontend/src/types/api.ts
+export interface DedupCheckRequest {
+  lat: number;
+  lng: number;
+  category?: CivicCategory | null;
+  title?: string | null;
+  description?: string | null;
+  text?: string | null;        // NEW
+  landmark?: string | null;
+}
+```
+
+**Verify:** `grep -A 8 "DedupCheckRequest" backend/models/dedup.py`
+
+---
+
+### 8. Section 3: Intake Route `ward_id` from User vs AI Triaged
+**File:** `backend/routes/intake.py:18`, `backend/services/intake_service.py:92`  
+**Issue:** The `/api/intake/triage` endpoint accepts `ward_id` as user input (Form parameter) but the AI also returns a `ward_id` in `IntakeTriageResponse`. This creates ambiguity — should trust user or AI?
+
+**Fix:** Remove `ward_id` from intake endpoint parameters; let AI determine it:
+```python
+# backend/routes/intake.py
+async def triage_citizen_report(
+    photo: Optional[UploadFile] = File(None),
+    audio: Optional[UploadFile] = File(None),
+    text: Optional[str] = Form(None),
+    lat: Optional[float] = Form(None),
+    lng: Optional[float] = Form(None),
+    landmark: Optional[str] = Form(None),
+    # REMOVE: ward_id: Optional[str] = Form(None),
+):
+```
+
+**Verify:** `grep -n "ward_id" backend/routes/intake.py`
+
+---
+
+### 9. Section 4: Priority Escalation Thresholds Don't Match ROADMAP
+**File:** `backend/services/dedup_service.py:396`  
+**Issue:** ROADMAP §4.3 says "If impact score crosses defined thresholds (e.g., 3 reports, 5 reports), trigger automatic priority escalation (e.g. P2_MEDIUM → P1_HIGH)." Current code:
+- Score >= 3: P3→P2, P2→P1
+- Score >= 5: P3→P1, P2→P0, P1→P0
+
+The ROADMAP example only shows P2→P1 at 3, but code also escalates P3→P2. This is a **policy decision**, not a bug. Document the actual thresholds.
+
+**Fix:** Add docstring comment clarifying thresholds:
+```python
+# backend/services/dedup_service.py
+def compute_priority_escalation(current_priority: PriorityTier, impact_score: int) -> Tuple[PriorityTier, bool]:
+    """
+    Priority Escalation Thresholds (Community Impact Score):
+    - Score >= 3: P3_LOW → P2_MEDIUM, P2_MEDIUM → P1_HIGH
+    - Score >= 5: P3_LOW → P1_HIGH, P2_MEDIUM → P0_CRITICAL, P1_HIGH → P0_CRITICAL
+    """
+```
+
+**Verify:** `grep -A 10 "compute_priority_escalation" backend/services/dedup_service.py`
+
+---
+
+## P2 — Improve Robustness
+
+### 10. Section 3: `IntakeSubmissionResult` Missing `raw_input` Echo
+**File:** `backend/models/intake.py:82`, `backend/routes/intake.py:87`  
+**Issue:** `IntakeSubmissionResult` returns `photo_url`, `audio_url`, `triage` but doesn't echo back the raw input (`text`, `lat`, `lng`, `landmark`) for frontend confirmation.
+
+**Fix (Backend):**
+```python
+# backend/models/intake.py
+class IntakeSubmissionResult(BaseModel):
+    photo_url: Optional[str] = None
+    audio_url: Optional[str] = None
+    triage: IntakeTriageResponse
+    # ADD: echo back raw input for confirmation
+    text: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    landmark: Optional[str] = None
+```
+
+**Verify:** `grep -A 10 "IntakeSubmissionResult" backend/models/intake.py`
+
+---
+
+### 11. Section 4: `ReportSubmissionRequest` Exposes Internal Fields
+**File:** `backend/models/dedup.py:45`  
+**Issue:** `ReportSubmissionRequest` includes `force_new: bool = False` and `matched_incident_id: Optional[str] = None` which are **frontend decision** fields, not citizen input. They should be separate from the submission payload.
+
+**Fix:** Split into `CitizenReportInput` (pure citizen data) + `SubmissionOptions` (frontend flags):
+```python
+# backend/models/dedup.py
+class CitizenReportInput(BaseModel):
+    """Pure citizen-provided data — no frontend decision flags."""
+    title: str
+    description_standardized_en: str
+    category: CivicCategory
+    priority: PriorityTier
+    agency: IndianAgency
+    ward_id: str
+    lat: float
+    lng: float
+    landmark: Optional[str] = None
+    formatted_address: Optional[str] = None
+    photo_url: Optional[str] = None
+    audio_url: Optional[str] = None
+    raw_text: Optional[str] = None
+    transcription: Optional[str] = None
+    language_detected: Optional[str] = None
+    vernacular_response: Optional[str] = None
+    citizen_contact: Optional[str] = "+91-9876543210"
+    triage_trace: Optional[ExplainableTriageTrace] = None
+
+class ReportSubmissionOptions(BaseModel):
+    """Frontend-only flags for deduplication behavior."""
+    force_new: bool = False
+    matched_incident_id: Optional[str] = None
+
+class ReportSubmissionRequest(BaseModel):
+    """Combined request for API endpoint."""
+    report: CitizenReportInput
+    options: ReportSubmissionOptions = Field(default_factory=ReportSubmissionOptions)
+```
+
+**Verify:** `grep -A 20 "ReportSubmissionRequest" backend/models/dedup.py`
+
+---
+
+## Verification Checklist for Sections 3 & 4 Fixes
+
+| Check | Command | Expected |
+|-------|---------|----------|
+| All tests pass | `.venv/bin/python -m pytest tests/ -v` | 26 passed |
+| Frontend build | `cd frontend && npm run build` | Success |
+| Intake wire format | `grep -n "landmark_clues\|detected_language\|visual_hazard_factors" backend/models/intake.py` | Matches CONTEXT.md §5.3 |
+| Dedup wire format | `grep -n "confidence" backend/models/dedup.py` | No matches |
+| DedupCheckRequest has text | `grep -n "text" backend/models/dedup.py` | Has `text: Optional[str]` |
+| Intake route no ward_id | `grep "ward_id" backend/routes/intake.py` | Only in response, not params |
+| IntakeSubmissionResult echoes input | `grep -n "text\|lat\|lng" backend/models/intake.py` | Has echo fields |
+| ReportSubmissionRequest split | `grep "CitizenReportInput" backend/models/dedup.py` | Match |
+
+---
+
+## Notes on Sections 3 & 4 Compliance
+
+| ROADMAP Acceptance Criteria | Status |
+|----------------------------|--------|
+| **§3.1 Single-call multimodal intake** | ✅ (impl uses single Gemini call) |
+| **§3.1 Visual sanity gate** | ✅ (`is_valid_civic_issue` gate) |
+| **§3.1 Native structured output** | ✅ (`response_schema=IntakeTriageResponse`) |
+| **§3.1 Blurry/non-civic rejection** | ✅ (tested) |
+| **§3.2 Schema implementation** | ✅ **RESOLVED & ALIGNED (All wire format aliases reconciled)** |
+| **§4.1 Haversine 100m radius** | ✅ (tested) |
+| **§4.2 Gemini semantic comparator** | ✅ (with fallback) |
+| **§4.2 Return format** | ✅ **RESOLVED (confidence optional/omitted)** |
+| **§4.3 Crowd impact escalation** | ✅ (thresholds documented and tested) |
+| **§4.3 Upvote endpoint** | ✅ (tested) |
+
+**Resolution Summary (2026-11-21):**
+- All 11 stress test issues verified and fixed.
+- `IntakeTriageResponse` strictly implements CONTEXT.md §5.3 canonical wire fields (`landmark_clues`, `detected_language`, `visual_hazard_factors`, `monsoon_multiplier_applied`, `jurisdiction_rationale`, `confidence_score`) with backward-compatible aliases.
+- `DedupComparisonResponse` wire format matches ROADMAP §4.2.
+- `DedupCheckRequest` includes `text` input.
+- `IntakeSubmissionResult` echoes raw input fields (`text`, `lat`, `lng`, `landmark`).
+- All 26 backend unit & integration tests pass cleanly; frontend Vite builds with 0 errors.

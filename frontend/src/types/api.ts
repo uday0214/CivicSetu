@@ -129,23 +129,40 @@ export interface IntakeTriageResponse {
   is_valid_civic_issue: boolean;
   rejection_reason?: string | null;
   suggested_user_prompt?: string | null;
-  language_detected?: string | null;
-  transcription?: string | null;
   title?: string | null;
   description_standardized_en?: string | null;
   category?: CivicCategory | null;
   priority?: PriorityTier | null;
   agency?: IndianAgency | null;
   ward_id?: string | null;
+  landmark_clues?: string | null;
   extracted_landmark?: string | null;
-  triage_trace?: ExplainableTriageTrace | null;
+  visual_hazard_factors?: string[];
+  monsoon_multiplier_applied?: boolean;
+  jurisdiction_rationale?: string | null;
+  confidence_score?: number;
+  detected_language?: string | null;
+  language_detected?: string | null;
   vernacular_acknowledgement?: string | null;
+  transcription?: string | null;
+  triage_trace?: ExplainableTriageTrace | null;
 }
 
 export interface IntakeSubmissionResult {
   photo_url?: string | null;
   audio_url?: string | null;
   triage: IntakeTriageResponse;
+  text?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  landmark?: string | null;
+}
+
+export interface DedupComparisonResponse {
+  is_duplicate: boolean;
+  matched_incident_id?: string | null;
+  similarity_reason: string;
+  confidence?: number | null;
 }
 
 export interface DedupCheckRequest {
@@ -154,6 +171,7 @@ export interface DedupCheckRequest {
   category?: CivicCategory | null;
   title?: string | null;
   description?: string | null;
+  text?: string | null;
   landmark?: string | null;
 }
 

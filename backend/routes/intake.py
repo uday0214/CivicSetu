@@ -97,6 +97,10 @@ async def triage_citizen_report(
         photo_url=photo_url,
         audio_url=audio_url,
         triage=triage_result,
+        text=text,
+        lat=lat,
+        lng=lng,
+        landmark=landmark,
     )
 
 
@@ -113,6 +117,7 @@ async def check_duplicate_incident(request: DedupCheckRequest):
         title=request.title,
         description=request.description,
         landmark=request.landmark,
+        text=request.text,
     )
     return result
 

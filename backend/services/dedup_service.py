@@ -205,6 +205,7 @@ async def check_for_duplicates(
     title: Optional[str] = None,
     description: Optional[str] = None,
     landmark: Optional[str] = None,
+    text: Optional[str] = None,
 ) -> DedupCheckResult:
     """
     Performs spatial candidate search and semantic comparison to check if duplicate exists.
@@ -228,10 +229,11 @@ async def check_for_duplicates(
         for inc, dist in nearby
     ]
 
+    effective_desc = description or text or ""
     new_report_payload = {
         "title": title or "",
         "category": category.value if category else "",
-        "description": description or "",
+        "description": effective_desc,
         "landmark": landmark or "",
     }
 

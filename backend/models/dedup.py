@@ -23,7 +23,7 @@ class DedupComparisonResponse(BaseModel):
     is_duplicate: bool = Field(..., description="True if the new report describes the same physical civic issue as an existing incident")
     matched_incident_id: Optional[str] = Field(None, description="The incident_id of the matching MasterIncident, or null if unique")
     similarity_reason: str = Field(..., description="Explanation of why this is or isn't a duplicate")
-    confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Confidence in match verdict")
+    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Optional confidence in match verdict")
 
 
 class DedupCheckRequest(BaseModel):
@@ -32,6 +32,7 @@ class DedupCheckRequest(BaseModel):
     category: Optional[CivicCategory] = None
     title: Optional[str] = None
     description: Optional[str] = None
+    text: Optional[str] = None
     landmark: Optional[str] = None
 
 

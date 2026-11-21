@@ -82,7 +82,7 @@ def get_default_demo_triage_fallback(
     if is_live_wire:
         return IntakeTriageResponse(
             is_valid_civic_issue=True,
-            language_detected="hi-Latn (Hinglish)",
+            detected_language="hi-Latn (Hinglish)",
             transcription=text_prompt or "School ke paas electric wire latak raha hai paani me",
             title="Dangling High-Tension Electrical Wire Near School Gate",
             description_standardized_en="Exposed electrical wire hanging dangerously close to a rainwater puddle near the school entrance, presenting an acute electrocution risk.",
@@ -90,7 +90,11 @@ def get_default_demo_triage_fallback(
             priority=PriorityTier.P0_CRITICAL,
             agency=IndianAgency.DISCOM_ELECTRICAL,
             ward_id="Ward 14 - Indiranagar",
-            extracted_landmark=landmark or "Near Indiranagar Primary School Gate",
+            landmark_clues=landmark or "Near Indiranagar Primary School Gate",
+            visual_hazard_factors=["Dangling live cable", "Proximity to rainwater puddle", "Pedestrian footfall"],
+            monsoon_multiplier_applied=True,
+            jurisdiction_rationale="Power distribution infrastructure and exposed live lines fall strictly under the jurisdiction of the State Electricity Distribution Company (BESCOM).",
+            confidence_score=0.98,
             triage_trace=ExplainableTriageTrace(
                 visual_hazard_factors=["Dangling live cable", "Proximity to rainwater puddle", "Pedestrian footfall"],
                 vulnerable_proximity="Adjacent to primary school gate",
@@ -104,7 +108,7 @@ def get_default_demo_triage_fallback(
     if is_garbage:
         return IntakeTriageResponse(
             is_valid_civic_issue=True,
-            language_detected="hi-Latn (Hinglish)",
+            detected_language="hi-Latn (Hinglish)",
             transcription=text_prompt or "Market road pe bohot sara kachra jama hai",
             title="Commercial Market Solid Waste Dump Blocking Footpath",
             description_standardized_en="Overflowing municipal garbage heap encroaching onto the pedestrian footpath, attracting stray animals and creating public health risks.",
@@ -112,7 +116,11 @@ def get_default_demo_triage_fallback(
             priority=PriorityTier.P2_MEDIUM,
             agency=IndianAgency.ULB_MUNICIPAL,
             ward_id="Ward 84 - Koramangala",
-            extracted_landmark=landmark or "Opposite Koramangala Market Complex",
+            landmark_clues=landmark or "Opposite Koramangala Market Complex",
+            visual_hazard_factors=["Footpath blockage", "Attracting stray animals", "Foul odor"],
+            monsoon_multiplier_applied=False,
+            jurisdiction_rationale="Solid waste management and commercial market sanitation are the direct statutory responsibility of the Urban Local Body (BBMP).",
+            confidence_score=0.94,
             triage_trace=ExplainableTriageTrace(
                 visual_hazard_factors=["Footpath blockage", "Attracting stray animals", "Foul odor"],
                 vulnerable_proximity="Commercial market pedestrian walkway",
@@ -126,7 +134,7 @@ def get_default_demo_triage_fallback(
     # Default: Submerged Pothole on 100 Feet Road (P0 Monsoon Hazard)
     return IntakeTriageResponse(
         is_valid_civic_issue=True,
-        language_detected="hi-Latn (Hinglish)",
+        detected_language="hi-Latn (Hinglish)",
         transcription=text_prompt or "Metro station ke theek samne road pe bada gaddha hai aur barish ka paani bhara hua hai",
         title="Submerged Pothole with Severe Waterlogging",
         description_standardized_en="Deep pothole (~2x1.5m) completely submerged in standing rainwater on a busy arterial corridor, posing severe skidding hazards for two-wheelers.",
@@ -134,7 +142,11 @@ def get_default_demo_triage_fallback(
         priority=PriorityTier.P0_CRITICAL,
         agency=IndianAgency.STATE_PWD,
         ward_id="Ward 14 - Indiranagar",
-        extracted_landmark=landmark or "Near Indiranagar Metro Station Pillar 42",
+        landmark_clues=landmark or "Near Indiranagar Metro Station Pillar 42",
+        visual_hazard_factors=["Water depth obscures pothole edges", "Heavy vehicular traffic", "Two-wheeler skidding risk"],
+        monsoon_multiplier_applied=True,
+        jurisdiction_rationale="100 Feet Road is a notified State Bus Route and arterial corridor maintained by the State Public Works Department (PWD).",
+        confidence_score=0.96,
         triage_trace=ExplainableTriageTrace(
             visual_hazard_factors=["Water depth obscures pothole edges", "Heavy vehicular traffic", "Two-wheeler skidding risk"],
             vulnerable_proximity="45m from Indiranagar Metro Station entrance",

@@ -53,6 +53,13 @@ def test_intake_triage_schema_valid():
     assert response.priority == PriorityTier.P1_HIGH
     assert response.agency == IndianAgency.STATE_PWD
     assert response.category == CivicCategory.ROADS_FOOTPATHS
+    # Verify canonical CONTEXT.md §5.3 fields and backward-compatible aliases
+    assert response.landmark_clues == "Near Indiranagar Metro"
+    assert response.extracted_landmark == "Near Indiranagar Metro"
+    assert response.detected_language == "hi-Latn (Hinglish)"
+    assert response.language_detected == "hi-Latn (Hinglish)"
+    assert "Deep crater in road surface" in response.visual_hazard_factors
+    assert response.confidence_score == 0.95
 
 
 def test_intake_triage_sanity_gate_rejection():
@@ -92,6 +99,9 @@ def test_default_demo_triage_fallbacks():
     assert default_triage.agency == IndianAgency.STATE_PWD
     assert default_triage.category == CivicCategory.ROADS_FOOTPATHS
     assert default_triage.triage_trace.monsoon_multiplier is True
+    assert default_triage.monsoon_multiplier_applied is True
+    assert default_triage.landmark_clues is not None
+    assert default_triage.detected_language == "hi-Latn (Hinglish)"
 
 
 @pytest.mark.asyncio
