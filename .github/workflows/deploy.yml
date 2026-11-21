@@ -1,0 +1,62 @@
+name: Deploy to Google Cloud Run (Free Tier)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE_NAME: civicsetu
+  REGION: us-central1
+  GAR_NAME: civicsetu-repo
+
+jobs:
+  deploy:
+    name: Build & Deploy to Cloud Run
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Google Cloud Authentication
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          LATEST_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.SERVICE_NAME }}:latest"
+          
+          docker build -t "$IMAGE_TAG" -t "$LATEST_TAG" .
+          docker push "$IMAGE_TAG"
+          docker push "$LATEST_TAG"
+
+      - name: Deploy to Cloud Run (Always Free Tier Configured)
+        run: |
+          IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image "$IMAGE_TAG" \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --port 8000 \
+            --cpu 1 \
+            --memory 512Mi \
+            --min-instances 0 \
+            --max-instances 2 \
+            --concurrency 80 \
+            --set-env-vars "DATA_STORE_MODE=sqlite,DEMO_FALLBACK_ON_QUOTA=true" \
+            --set-env-vars "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
+            --set-env-vars "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}"
