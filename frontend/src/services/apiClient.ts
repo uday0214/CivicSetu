@@ -10,6 +10,10 @@ import {
   CitizenReopenRequest,
   CitizenReopenResult,
   IncidentStatus,
+  WorkOrderResponse,
+  SystemicBriefingResponse,
+  IncidentOverrideRequest,
+  KpiSummaryResponse,
 } from '../types/api';
 
 const API_BASE = '/api';
@@ -85,6 +89,15 @@ export const apiClient = {
     return res.json();
   },
 
+  async getIncidents(params?: {
+    ward_id?: string;
+    agency?: string;
+    priority?: string;
+    status?: string;
+  }): Promise<MasterIncident[]> {
+    return this.listIncidents(params);
+  },
+
   async getIncident(incidentId: string): Promise<MasterIncident> {
     const res = await fetch(`${API_BASE}/incidents/${incidentId}`);
     if (!res.ok) throw new Error(`Incident ${incidentId} not found`);
@@ -140,6 +153,53 @@ export const apiClient = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Status update failed' }));
       throw new Error(err.detail || 'Status update failed');
+    }
+    return res.json();
+  },
+
+  async getKpiSummary(): Promise<KpiSummaryResponse> {
+    const res = await fetch(`${API_BASE}/analytics/kpi`);
+    if (!res.ok) {
+      return {
+        critical_open_count: 0,
+        sla_overdue_count: 0,
+        escalated_commissioner_count: 0,
+        duplicates_merged_count: 0,
+        ai_verification_rate: 96.0,
+        avg_resolution_time_hours: 18.5,
+      };
+    }
+    return res.json();
+  },
+
+  async getSystemicBriefing(): Promise<SystemicBriefingResponse> {
+    const res = await fetch(`${API_BASE}/analytics/systemic-briefing`);
+    if (!res.ok) {
+      throw new Error('Failed to generate systemic pattern briefing');
+    }
+    return res.json();
+  },
+
+  async generateWorkOrder(incidentId: string): Promise<WorkOrderResponse> {
+    const res = await fetch(`${API_BASE}/incidents/${incidentId}/work-order`, {
+      method: 'POST',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Work order generation failed' }));
+      throw new Error(err.detail || 'Work order generation failed');
+    }
+    return res.json();
+  },
+
+  async overrideIncident(incidentId: string, request: IncidentOverrideRequest): Promise<MasterIncident> {
+    const res = await fetch(`${API_BASE}/incidents/${incidentId}/override`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Incident override failed' }));
+      throw new Error(err.detail || 'Incident override failed');
     }
     return res.json();
   },

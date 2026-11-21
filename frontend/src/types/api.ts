@@ -242,6 +242,39 @@ export interface CitizenReopenResult {
   message: string;
 }
 
+export interface WorkOrderResponse {
+  incident_id: string;
+  probable_root_cause: string;
+  recommended_crew_size: string;
+  required_equipment: string[];
+  safety_precautions: string[];
+  work_order_markdown: string;
+}
+
+export interface SystemicBriefingResponse {
+  clusters_detected: number;
+  systemic_analysis_markdown: string;
+  recommended_joint_dispatch: string[];
+  priority_watchlist: string[];
+}
+
+export interface IncidentOverrideRequest {
+  agency?: IndianAgency;
+  priority?: PriorityTier;
+  status?: IncidentStatus;
+  ward_id?: string;
+  notes: string;
+}
+
+export interface KpiSummaryResponse {
+  critical_open_count: number;
+  sla_overdue_count: number;
+  escalated_commissioner_count: number;
+  duplicates_merged_count: number;
+  ai_verification_rate: number;
+  avg_resolution_time_hours: number;
+}
+
 export interface SystemStatus {
   status: string;
   service: string;

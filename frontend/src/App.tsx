@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
 import { TopNav } from './components/layout/TopNav';
-import { SnapSpeakForm } from './components/citizen/SnapSpeakForm';
-import { NearbyFeed } from './components/citizen/NearbyFeed';
-import { MyReportsList } from './components/citizen/MyReportsList';
+import { SnapSpeakForm, NearbyFeed, MyReportsList } from './components/citizen';
+import { KpiStrip } from './components/admin/KpiStrip';
+import { CommandMap } from './components/admin/CommandMap';
+import { TicketQueue } from './components/admin/TicketQueue';
+import { TriageDrawer } from './components/admin/TriageDrawer';
+import { SystemicBriefingModal } from './components/admin/SystemicBriefingModal';
 import { apiClient } from './services/apiClient';
-import { SystemStatus, ReportSubmissionResponse } from './types/api';
-import { CheckCircle2, AlertTriangle, ArrowRight, Camera, MapPin, Clock } from 'lucide-react';
+import {
+  SystemStatus,
+  ReportSubmissionResponse,
+  MasterIncident,
+  KpiSummaryResponse,
+  SystemicBriefingResponse,
+} from './types/api';
+import { CheckCircle2, Camera, MapPin, Clock, Loader2 } from 'lucide-react';
 
 export function App() {
   const [activeRole, setActiveRole] = useState<'citizen' | 'admin'>('citizen');
@@ -13,16 +22,74 @@ export function App() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
 
+  // Admin Portal State
+  const [adminIncidents, setAdminIncidents] = useState<MasterIncident[]>([]);
+  const [adminKpi, setAdminKpi] = useState<KpiSummaryResponse | null>(null);
+  const [selectedIncident, setSelectedIncident] = useState<MasterIncident | null>(null);
+  const [briefing, setBriefing] = useState<SystemicBriefingResponse | null>(null);
+  const [isBriefingOpen, setIsBriefingOpen] = useState<boolean>(false);
+  const [isLoadingAdmin, setIsLoadingAdmin] = useState<boolean>(false);
+  const [filterCriticalOnly, setFilterCriticalOnly] = useState<boolean>(false);
+  const [filterOverdueOnly, setFilterOverdueOnly] = useState<boolean>(false);
+
   useEffect(() => {
     apiClient.getHealth()
       .then(setSystemStatus)
       .catch((err) => console.warn('Could not fetch initial health status:', err));
   }, []);
 
+  // Fetch Admin Data when role switches to Admin
+  useEffect(() => {
+    if (activeRole === 'admin') {
+      fetchAdminData();
+    }
+  }, [activeRole]);
+
+  const fetchAdminData = async () => {
+    setIsLoadingAdmin(true);
+    try {
+      const [incList, kpiData] = await Promise.all([
+        apiClient.listIncidents(),
+        apiClient.getKpiSummary(),
+      ]);
+      setAdminIncidents(incList);
+      setAdminKpi(kpiData);
+      if (incList.length > 0 && !selectedIncident) {
+        setSelectedIncident(incList[0]);
+      }
+    } catch (err) {
+      console.error('Failed to load admin data:', err);
+    } finally {
+      setIsLoadingAdmin(false);
+    }
+  };
+
+  const handleOpenBriefing = async () => {
+    try {
+      const data = await apiClient.getSystemicBriefing();
+      setBriefing(data);
+      setIsBriefingOpen(true);
+    } catch (err) {
+      console.error('Failed to load systemic briefing:', err);
+      alert('Could not generate systemic briefing at this moment.');
+    }
+  };
+
+  const handleAdminIncidentUpdated = (updated: MasterIncident) => {
+    setAdminIncidents((prev) =>
+      prev.map((inc) => (inc.incident_id === updated.incident_id ? updated : inc))
+    );
+    setSelectedIncident(updated);
+    apiClient.getKpiSummary().then(setAdminKpi).catch(() => {});
+  };
+
   const handleResetDemo = async () => {
     try {
       const res = await apiClient.resetDemoData();
       setResetMessage(res.message);
+      if (activeRole === 'admin') {
+        fetchAdminData();
+      }
       setTimeout(() => setResetMessage(null), 3000);
     } catch {
       setResetMessage('Demo data reset to local default.');
@@ -31,7 +98,6 @@ export function App() {
   };
 
   const handleReportSubmitted = (_result: ReportSubmissionResponse) => {
-    // Automatically switch to My Reports tab so user sees their new ticket
     setCitizenTab('my-reports');
   };
 
@@ -53,10 +119,10 @@ export function App() {
       )}
 
       {/* Main Container Switch */}
-      <main className="flex-1">
+      <main className="flex-1 min-h-0 flex flex-col">
         {activeRole === 'citizen' ? (
           /* Mobile-First Citizen Shell Container */
-          <div className="max-w-xl mx-auto flex flex-col min-h-[calc(100vh-56px)]">
+          <div className="max-w-xl w-full mx-auto flex flex-col min-h-[calc(100vh-56px)]">
             {/* Top Sub-Nav Tabs */}
             <div className="p-3 sticky top-14 z-30 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
               <div className="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
@@ -107,46 +173,69 @@ export function App() {
           </div>
         ) : (
           /* Desktop-First Admin Command Center Workspace */
-          <div className="w-full h-[calc(100vh-56px)] overflow-hidden flex flex-col p-4 bg-slate-100 space-y-3">
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                  Municipal Command Center
-                </span>
-                <h2 className="text-lg font-bold text-slate-900 mt-1">
-                  High-Signal GIS Triage & Dispatch
-                </h2>
+          <div className="w-full h-[calc(100vh-56px)] overflow-hidden flex flex-col bg-slate-950">
+            {/* Top Operational KPI Strip */}
+            {adminKpi && (
+              <KpiStrip
+                kpi={adminKpi}
+                onAnalyzePatterns={handleOpenBriefing}
+                onFilterOverdue={() => {
+                  setFilterOverdueOnly((prev) => !prev);
+                  setFilterCriticalOnly(false);
+                }}
+                onFilterCritical={() => {
+                  setFilterCriticalOnly((prev) => !prev);
+                  setFilterOverdueOnly(false);
+                }}
+              />
+            )}
+
+            {/* Split Screen Workspace: Map + Queue */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 relative">
+              {isLoadingAdmin && (
+                <div className="absolute inset-0 z-40 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center gap-2 text-indigo-400 text-xs font-semibold">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Loading Municipal Command Data...</span>
+                </div>
+              )}
+
+              {/* Left Column (7 cols): GIS Command Map */}
+              <div className="lg:col-span-7 h-full relative">
+                <CommandMap
+                  incidents={adminIncidents}
+                  selectedIncident={selectedIncident}
+                  onSelectIncident={(inc) => setSelectedIncident(inc)}
+                />
               </div>
-              <div className="flex items-center space-x-2 text-xs">
-                <span className="px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded-md font-semibold flex items-center space-x-1">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Escalation Ladder Active</span>
-                </span>
+
+              {/* Right Column (5 cols): Triage Ticket Queue */}
+              <div className="lg:col-span-5 h-full min-h-0 overflow-hidden">
+                <TicketQueue
+                  incidents={adminIncidents}
+                  selectedIncident={selectedIncident}
+                  onSelectIncident={(inc) => setSelectedIncident(inc)}
+                  filterOverdueOnly={filterOverdueOnly}
+                  filterCriticalOnly={filterCriticalOnly}
+                />
               </div>
+
+              {/* Slide-over Triage Drawer */}
+              {selectedIncident && (
+                <TriageDrawer
+                  incident={selectedIncident}
+                  onClose={() => setSelectedIncident(null)}
+                  onIncidentUpdated={handleAdminIncidentUpdated}
+                />
+              )}
             </div>
 
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0">
-              <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center text-center">
-                <p className="text-sm font-semibold text-slate-700">Leaflet GIS Command Map</p>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm">
-                  Interactive map with custom L.divIcon priority pins and CircleMarker hotspot density will render here in Section 7.
-                </p>
-              </div>
-
-              <div className="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center text-center">
-                <p className="text-sm font-semibold text-slate-700">Incident Triage Queue</p>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm">
-                  Sortable queue with Explainable AI Triage Drawer and 1-click work orders.
-                </p>
-                <button
-                  onClick={() => setActiveRole('citizen')}
-                  className="mt-4 inline-flex items-center space-x-1 text-xs text-indigo-600 font-semibold hover:underline"
-                >
-                  <span>Switch back to Citizen View</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
+            {/* Systemic Infrastructure Briefing Modal */}
+            {isBriefingOpen && briefing && (
+              <SystemicBriefingModal
+                briefing={briefing}
+                onClose={() => setIsBriefingOpen(false)}
+              />
+            )}
           </div>
         )}
       </main>

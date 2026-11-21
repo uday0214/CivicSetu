@@ -1,6 +1,7 @@
 """CivicSetu Master Incidents API Routes."""
 
 import logging
+from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Form, Body
 
@@ -11,11 +12,19 @@ from backend.models.audit import (
     CitizenReopenRequest,
     CitizenReopenResult,
 )
+from backend.models.admin import (
+    WorkOrderResponse,
+    IncidentOverrideRequest,
+)
 from backend.models.state_machine import is_valid_status_transition, compute_sla_deadline
 from backend.services.dedup_service import compute_priority_escalation
 from backend.services.audit_service import (
     process_resolution_submission,
     process_citizen_reopen,
+)
+from backend.services.admin_service import (
+    generate_field_work_order,
+    apply_incident_override,
 )
 from backend.storage.json_store import get_repository
 
@@ -117,6 +126,18 @@ async def resolve_incident_with_audit(
     If genuine, marks status RESOLVED and starts 48h citizen review window.
     If fake or incomplete, keeps status IN_PROGRESS and logs discrepancy evidence.
     """
+    repo = get_repository()
+    data = await repo.get_incident(incident_id)
+    if not data:
+        raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
+
+    incident = MasterIncident.model_validate(data)
+    if incident.status != IncidentStatus.IN_PROGRESS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Incident must be IN_PROGRESS to submit resolution. Current status: {incident.status.value}",
+        )
+
     photo_bytes = await photo.read()
     if not photo_bytes:
         raise HTTPException(status_code=400, detail="Uploaded photo is empty.")
@@ -136,6 +157,8 @@ async def resolve_incident_with_audit(
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error during resolution audit: {e}")
         raise HTTPException(status_code=500, detail=f"Resolution audit failed: {e}")
@@ -149,6 +172,24 @@ async def reopen_incident_endpoint(
     """
     Citizen endpoint allowing reopening of a resolved incident within 48 hours.
     """
+    repo = get_repository()
+    data = await repo.get_incident(incident_id)
+    if not data:
+        raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
+
+    incident = MasterIncident.model_validate(data)
+    if incident.status != IncidentStatus.RESOLVED:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only RESOLVED incidents can be reopened. Current status: {incident.status.value}",
+        )
+
+    audit = incident.resolution_audit
+    if audit and audit.citizen_reopen_window_expires:
+        expires = datetime.fromisoformat(audit.citizen_reopen_window_expires.replace("Z", "+00:00"))
+        if datetime.now(timezone.utc) > expires:
+            raise HTTPException(status_code=403, detail="48-hour citizen reopen window has expired")
+
     try:
         result = await process_citizen_reopen(
             incident_id=incident_id,
@@ -157,6 +198,8 @@ async def reopen_incident_endpoint(
         )
         return result
     except ValueError as e:
+        if "expired" in str(e).lower():
+            raise HTTPException(status_code=403, detail=str(e))
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -187,4 +230,35 @@ async def update_incident_status(
         "incident_id": incident.incident_id,
         "status": incident.status,
     }
+
+
+@router.post("/{incident_id}/work-order", response_model=WorkOrderResponse)
+async def create_field_work_order(incident_id: str):
+    """
+    Synthesizes an engineering field work order dispatch brief with equipment and safety precautions.
+    """
+    repo = get_repository()
+    data = await repo.get_incident(incident_id)
+    if not data:
+        raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
+
+    try:
+        return await generate_field_work_order(data)
+    except Exception as e:
+        logger.error(f"Failed to generate work order: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/{incident_id}/override", response_model=MasterIncident)
+async def override_incident(incident_id: str, request: IncidentOverrideRequest):
+    """
+    Administrative human-in-the-loop override for department re-routing, priority escalation, or status update.
+    """
+    try:
+        return await apply_incident_override(incident_id, request)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to override incident: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
