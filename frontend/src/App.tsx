@@ -220,12 +220,8 @@ export function App() {
             {/* Centered Details Pane - Flowing Strictly Top-to-Bottom */}
             <div className="flex-1 bg-neutral-50/70 py-8 sm:py-12 px-4 sm:px-6 relative overflow-hidden">
               {/* Lightweight Interactive Connected Side Nodes */}
-              <div className="left-2 inset-y-0 absolute">
-                <InteractiveSideNodes side="left" />
-              </div>
-              <div className="right-2 inset-y-0 absolute">
-                <InteractiveSideNodes side="right" />
-              </div>
+              <InteractiveSideNodes side="left" />
+              <InteractiveSideNodes side="right" />
 
               <div className="max-w-2xl sm:max-w-3xl mx-auto relative z-10">
                 {citizenTab === 'report' && (

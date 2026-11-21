@@ -55,7 +55,7 @@ const RIGHT_NODES: CivicNode[] = [
     label: 'Circle 20',
     sub: 'Madhapur / Hitec',
     state: 'TG',
-    x: 65,
+    x: 60,
     y: 16,
     connectedTo: ['r2'],
   },
@@ -64,7 +64,7 @@ const RIGHT_NODES: CivicNode[] = [
     label: 'Zone 9',
     sub: 'T. Nagar GCC',
     state: 'TN',
-    x: 32,
+    x: 35,
     y: 44,
     connectedTo: ['r3'],
   },
@@ -73,7 +73,7 @@ const RIGHT_NODES: CivicNode[] = [
     label: 'Zone 3',
     sub: 'Vizag Beach Rd',
     state: 'AP',
-    x: 68,
+    x: 62,
     y: 70,
     connectedTo: ['r4'],
   },
@@ -82,7 +82,7 @@ const RIGHT_NODES: CivicNode[] = [
     label: 'Circle 2',
     sub: 'Vijayawada VMC',
     state: 'AP',
-    x: 40,
+    x: 38,
     y: 90,
     connectedTo: [],
   },
@@ -106,7 +106,11 @@ export const InteractiveSideNodes: React.FC<InteractiveSideNodesProps> = ({ side
   }, [nodes.length]);
 
   return (
-    <div className="hidden xl:block absolute inset-y-0 w-64 pointer-events-auto select-none overflow-hidden transition-opacity duration-300">
+    <div
+      className={`hidden lg:block absolute inset-y-0 w-48 sm:w-60 pointer-events-auto select-none transition-opacity duration-300 z-0 ${
+        side === 'left' ? 'left-2 xl:left-8' : 'right-2 xl:right-8'
+      }`}
+    >
       {/* SVG Connecting Vector Lines */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
         <defs>
