@@ -13,6 +13,7 @@ import {
   Send,
   Loader2,
   Trash2,
+  Search,
 } from 'lucide-react';
 import { apiClient } from '../../services/apiClient';
 import {
@@ -28,6 +29,15 @@ import {
 } from '../../types/api';
 import { DuplicateModal } from './DuplicateModal';
 import { createCustomSvgPin } from '../../utils/mapIcons';
+
+const BENGALURU_PRESETS = [
+  { name: 'Indiranagar', lat: 12.9784, lng: 77.6408, landmark: '100 Feet Road, Indiranagar, Bengaluru' },
+  { name: 'Koramangala', lat: 12.9352, lng: 77.6245, landmark: '80 Feet Road, Koramangala 4th Block, Bengaluru' },
+  { name: 'HSR Layout', lat: 12.9121, lng: 77.6446, landmark: '27th Main Road, HSR Layout Sector 1, Bengaluru' },
+  { name: 'Bellandur', lat: 12.9304, lng: 77.6784, landmark: 'Outer Ring Road, Bellandur, Bengaluru' },
+  { name: 'Whitefield', lat: 12.9698, lng: 77.7499, landmark: 'ITPB Main Road, Whitefield, Bengaluru' },
+  { name: 'Central / MG Rd', lat: 12.9756, lng: 77.6066, landmark: 'MG Road Metro Station, Central Bengaluru' },
+];
 
 interface SnapSpeakFormProps {
   onReportSubmitted: (result: ReportSubmissionResponse) => void;
@@ -51,10 +61,12 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
   // Location & landmark states (Bengaluru defaults)
   const [lat, setLat] = useState<number>(12.9716);
   const [lng, setLng] = useState<number>(77.6412);
-  const [landmark, setLandmark] = useState<string>('');
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const leafletMapRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  const [landmark, setLandmark] = useState<string>('100 Feet Road, Indiranagar, Bengaluru');
+  const [isLocating, setIsLocating] = useState<boolean>(false);
+  const [locationStatus, setLocationStatus] = useState<{
+    type: 'success' | 'warning' | 'info';
+    message: string;
+  } | null>(null);
 
   // AI Triage & submission states
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
@@ -75,6 +87,174 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [duplicateMatch, setDuplicateMatch] = useState<DedupCheckResult | null>(null);
   const [submissionFeedback, setSubmissionFeedback] = useState<string | null>(null);
+
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const leafletMapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+
+  // Reverse geocodes coordinates to street / area name
+  const reverseGeocode = async (latitude: number, longitude: number) => {
+    // 1. Instant check against local presets
+    for (const p of BENGALURU_PRESETS) {
+      const dLat = Math.abs(p.lat - latitude);
+      const dLng = Math.abs(p.lng - longitude);
+      if (dLat < 0.012 && dLng < 0.012) {
+        setLandmark(p.landmark);
+        return;
+      }
+    }
+
+    // 2. Reverse geocode via OpenStreetMap Nominatim
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+        { headers: { 'Accept': 'application/json' }, signal: controller.signal }
+      );
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.address) {
+          const parts = [
+            data.address.road || data.address.pedestrian || data.address.neighbourhood,
+            data.address.suburb || data.address.residential,
+            data.address.city || data.address.town || 'Bengaluru',
+          ].filter(Boolean);
+          if (parts.length > 0) {
+            setLandmark(parts.join(', '));
+            return;
+          }
+        }
+        if (data.display_name) {
+          const shortName = data.display_name.split(',').slice(0, 3).join(', ');
+          setLandmark(shortName);
+        }
+      }
+    } catch {
+      // Offline fallback: keep coordinates
+    }
+  };
+
+  // Forward geocode search from user text input
+  const handleSearchAddress = async (query: string) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return;
+
+    // Check presets first
+    const matched = BENGALURU_PRESETS.find(
+      (p) => p.name.toLowerCase().includes(q) || p.landmark.toLowerCase().includes(q)
+    );
+    if (matched) {
+      setLat(matched.lat);
+      setLng(matched.lng);
+      setLandmark(matched.landmark);
+      setLocationStatus({ type: 'success', message: `📍 Jumped to ${matched.name}` });
+      if (leafletMapRef.current && markerRef.current) {
+        leafletMapRef.current.setView([matched.lat, matched.lng], 16);
+        markerRef.current.setLatLng([matched.lat, matched.lng]);
+        leafletMapRef.current.invalidateSize();
+      }
+      return;
+    }
+
+    // Search via OpenStreetMap
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Bengaluru')}&limit=1`,
+        { headers: { 'Accept': 'application/json' }, signal: controller.signal }
+      );
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.length > 0) {
+          const newLat = parseFloat(data[0].lat);
+          const newLng = parseFloat(data[0].lon);
+          setLat(newLat);
+          setLng(newLng);
+          setLocationStatus({ type: 'success', message: `📍 Positioned on map: ${data[0].display_name.split(',')[0]}` });
+          if (leafletMapRef.current && markerRef.current) {
+            leafletMapRef.current.setView([newLat, newLng], 16);
+            markerRef.current.setLatLng([newLat, newLng]);
+            leafletMapRef.current.invalidateSize();
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Geocoding search failed:', err);
+    }
+  };
+
+  // Robust multi-tier geolocation
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus({
+        type: 'warning',
+        message: 'GPS not supported by your browser. Please click the map or choose a preset below.',
+      });
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationStatus({ type: 'info', message: 'Detecting device GPS coordinates...' });
+
+    // Tier 1: High accuracy GPS
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const newLat = pos.coords.latitude;
+        const newLng = pos.coords.longitude;
+        setLat(newLat);
+        setLng(newLng);
+        setIsLocating(false);
+        const accuracy = Math.round(pos.coords.accuracy || 15);
+        setLocationStatus({
+          type: 'success',
+          message: `✓ GPS coordinates acquired (accuracy: ±${accuracy}m)`,
+        });
+        if (leafletMapRef.current && markerRef.current) {
+          leafletMapRef.current.setView([newLat, newLng], 16);
+          markerRef.current.setLatLng([newLat, newLng]);
+          leafletMapRef.current.invalidateSize();
+        }
+        reverseGeocode(newLat, newLng);
+      },
+      (err) => {
+        console.warn('High-accuracy GPS timed out/failed, falling back to network triangulation:', err);
+        // Tier 2: Low-accuracy / network-triangulated fallback
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const newLat = pos.coords.latitude;
+            const newLng = pos.coords.longitude;
+            setLat(newLat);
+            setLng(newLng);
+            setIsLocating(false);
+            setLocationStatus({
+              type: 'success',
+              message: `✓ Location detected via network location`,
+            });
+            if (leafletMapRef.current && markerRef.current) {
+              leafletMapRef.current.setView([newLat, newLng], 16);
+              markerRef.current.setLatLng([newLat, newLng]);
+              leafletMapRef.current.invalidateSize();
+            }
+            reverseGeocode(newLat, newLng);
+          },
+          (err2) => {
+            setIsLocating(false);
+            console.warn('Browser geolocation completely unavailable or permission denied:', err2);
+            setLocationStatus({
+              type: 'warning',
+              message: 'Browser GPS permission not granted. Drag the pin or click on the map to set your location.',
+            });
+          },
+          { enableHighAccuracy: false, timeout: 6000, maximumAge: 60000 }
+        );
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+    );
+  };
 
   // Initialize mini Leaflet map
   useEffect(() => {
@@ -97,58 +277,35 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
       const pos = marker.getLatLng();
       setLat(pos.lat);
       setLng(pos.lng);
+      setLocationStatus({ type: 'info', message: '📍 Pin location adjusted' });
+      reverseGeocode(pos.lat, pos.lng);
     });
 
     map.on('click', (e: L.LeafletMouseEvent) => {
       marker.setLatLng(e.latlng);
+      map.panTo(e.latlng);
       setLat(e.latlng.lat);
       setLng(e.latlng.lng);
+      setLocationStatus({ type: 'info', message: '📍 Location selected on map' });
+      reverseGeocode(e.latlng.lat, e.latlng.lng);
     });
 
     leafletMapRef.current = map;
     markerRef.current = marker;
 
+    // Invalidate size to guarantee tiles load cleanly
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+
     return () => {
+      clearTimeout(timer);
       map.remove();
       leafletMapRef.current = null;
     };
   }, []);
 
-  // Attempt silent GPS geolocation on mount
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLat(pos.coords.latitude);
-          setLng(pos.coords.longitude);
-        },
-        () => {
-          // Defaults to Bengaluru coords if denied/unavailable
-        },
-        { timeout: 4000 }
-      );
-    }
-  }, []);
-
-  const handleLocateMe = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLat(pos.coords.latitude);
-          setLng(pos.coords.longitude);
-        },
-        (err) => {
-          console.warn('Geolocation error:', err);
-          alert('Could not retrieve current GPS coordinates. Please ensure location permissions are enabled or click/drag the pin on the map.');
-        },
-        { enableHighAccuracy: true, timeout: 6000 }
-      );
-    } else {
-      alert('Geolocation is not supported by your browser.');
-    }
-  };
-
-  // Sync marker position when lat/lng change
+  // Sync marker position when lat/lng change externally
   useEffect(() => {
     if (leafletMapRef.current && markerRef.current) {
       markerRef.current.setLatLng([lat, lng]);
@@ -174,17 +331,19 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
       if (exifData && exifData.latitude && exifData.longitude) {
         setLat(exifData.latitude);
         setLng(exifData.longitude);
-      } else {
-        // Fallback to browser geolocation if supported
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              setLat(pos.coords.latitude);
-              setLng(pos.coords.longitude);
-            },
-            () => console.info('Using Bengaluru default coordinates')
-          );
+        setLocationStatus({
+          type: 'success',
+          message: `✓ Extracted camera GPS from photo (${exifData.latitude.toFixed(4)}, ${exifData.longitude.toFixed(4)})`,
+        });
+        if (leafletMapRef.current && markerRef.current) {
+          leafletMapRef.current.setView([exifData.latitude, exifData.longitude], 16);
+          markerRef.current.setLatLng([exifData.latitude, exifData.longitude]);
+          leafletMapRef.current.invalidateSize();
         }
+        reverseGeocode(exifData.latitude, exifData.longitude);
+      } else {
+        // Automatically query browser GPS if photo has no embedded EXIF tags
+        handleLocateMe();
       }
 
       // 2. Compress image via canvas to max width 1024px
@@ -511,40 +670,116 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
 
       {/* Step B: Location & Landmark Strip */}
       <div className="bg-white border border-neutral-300 rounded-2xl p-5 shadow-sm space-y-3">
-        <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+        <div className="flex items-center justify-between border-b border-neutral-200 pb-2.5">
           <h3 className="text-sm font-black text-neutral-950 flex items-center gap-2 uppercase tracking-wide">
             <MapPin className="w-4 h-4 text-neutral-900" />
-            2. Location & Landmark
+            2. Incident Location & Map Pin
           </h3>
 
           <button
             type="button"
             onClick={handleLocateMe}
-            className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-neutral-800 hover:text-black border border-neutral-300 hover:border-black rounded-full px-3 py-1 bg-neutral-50 hover:bg-neutral-100 transition shadow-xs active:translate-y-0.5"
+            disabled={isLocating}
+            className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-neutral-800 hover:text-black border border-neutral-300 hover:border-black rounded-full px-3.5 py-1.5 bg-neutral-50 hover:bg-neutral-100 disabled:opacity-60 transition shadow-xs active:translate-y-0.5"
             title="Automatically detect current GPS position"
           >
-            <Crosshair className="w-3 h-3 text-neutral-700" />
-            <span>Locate Me</span>
+            {isLocating ? (
+              <Loader2 className="w-3.5 h-3.5 text-neutral-800 animate-spin" />
+            ) : (
+              <Crosshair className="w-3.5 h-3.5 text-neutral-700" />
+            )}
+            <span>{isLocating ? 'Detecting GPS...' : 'Locate Me'}</span>
           </button>
         </div>
 
-        {/* Mini Leaflet Pin-Drop Map */}
-        <div ref={mapContainerRef} className="w-full h-36 rounded-xl overflow-hidden border border-neutral-300 shadow-inner" />
+        {/* Live GPS / Location Feedback Message */}
+        {locationStatus && (
+          <div
+            className={`px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-2 font-medium ${
+              locationStatus.type === 'success'
+                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                : locationStatus.type === 'warning'
+                ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                : 'bg-neutral-100 text-neutral-800 border border-neutral-200'
+            }`}
+          >
+            {locationStatus.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+            ) : (
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+            )}
+            <span>{locationStatus.message}</span>
+          </div>
+        )}
 
-        <div className="flex items-center gap-2 text-[11px] text-neutral-600 font-mono">
-          <span>Lat: {lat.toFixed(5)}</span>
-          <span>•</span>
-          <span>Lng: {lng.toFixed(5)}</span>
-          <span className="text-neutral-400">(Drag pin to refine location)</span>
+        {/* Leaflet Pin-Drop Map (height 48) */}
+        <div
+          ref={mapContainerRef}
+          className="w-full h-48 sm:h-52 rounded-xl overflow-hidden border border-neutral-300 shadow-inner"
+        />
+
+        {/* Quick Area Jump Buttons */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <span className="text-[10px] font-mono text-neutral-500 uppercase font-bold mr-1">
+            Quick Jump:
+          </span>
+          {BENGALURU_PRESETS.map((p) => (
+            <button
+              key={p.name}
+              type="button"
+              onClick={() => {
+                setLat(p.lat);
+                setLng(p.lng);
+                setLandmark(p.landmark);
+                setLocationStatus({ type: 'success', message: `📍 Jumped to ${p.name}` });
+                if (leafletMapRef.current && markerRef.current) {
+                  leafletMapRef.current.setView([p.lat, p.lng], 16);
+                  markerRef.current.setLatLng([p.lat, p.lng]);
+                  leafletMapRef.current.invalidateSize();
+                }
+              }}
+              className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-neutral-100 hover:bg-neutral-950 hover:text-white border border-neutral-200 transition active:translate-y-0.5"
+            >
+              {p.name}
+            </button>
+          ))}
         </div>
 
-        <input
-          type="text"
-          value={landmark}
-          onChange={(e) => setLandmark(e.target.value)}
-          placeholder="Landmark (e.g., Near Indiranagar Metro Pillar 42, opp. Sony Center)"
-          className="w-full text-xs p-3 rounded-xl bg-neutral-50 border border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black transition"
-        />
+        {/* Coordinate indicators & drag hint */}
+        <div className="flex items-center justify-between text-[11px] text-neutral-600 font-mono px-1">
+          <div className="flex items-center gap-2">
+            <span>Lat: {lat.toFixed(5)}</span>
+            <span>•</span>
+            <span>Lng: {lng.toFixed(5)}</span>
+          </div>
+          <span className="text-neutral-400 text-[10px]">(Click map or drag pin to move)</span>
+        </div>
+
+        {/* Landmark / Area Search Input with Find Button */}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={landmark}
+            onChange={(e) => setLandmark(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearchAddress(landmark);
+              }
+            }}
+            placeholder="Landmark / Street (e.g. 100 Feet Road Indiranagar, opp. KFC)"
+            className="flex-1 text-xs p-3 rounded-xl bg-neutral-50 border border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black transition"
+          />
+          <button
+            type="button"
+            onClick={() => handleSearchAddress(landmark)}
+            className="px-4 py-3 rounded-xl bg-neutral-100 hover:bg-neutral-950 hover:text-white border border-neutral-300 text-xs font-bold font-mono transition flex items-center gap-1.5"
+            title="Search and jump to this address on the map"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Find</span>
+          </button>
+        </div>
       </div>
 
       {/* Error alert */}
