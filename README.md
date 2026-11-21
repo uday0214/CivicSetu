@@ -6,7 +6,7 @@
 [![React 18](https://img.shields.io/badge/React-18.3-61DAFB.svg)](https://react.dev/)
 [![Gemini 2.5](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4.svg)](https://ai.google.dev/)
 
-> **Live Deployment:** `[LIVE_DEMO_URL]`  
+> **Live Deployment:** [https://civicsetu-yt0q.onrender.com/](https://civicsetu-yt0q.onrender.com/)  
 > *(Note: Use the top-navigation `Admin Portal ↗` and `Report Issue` buttons to switch between citizen reporting and the municipal command center instantly).*
 
 CivicSetu is an end-to-end civic resolution platform engineered for Indian urban local bodies across Karnataka, Telangana, Andhra Pradesh, and Tamil Nadu. It ingests code-mixed voice notes and photos from citizens, performs Gemini-powered multimodal triage and 100-meter spatial-semantic deduplication, maps the defect directly to the responsible local ward office with navigation links, and enforces verified visual resolution audits prior to ticket closure.
