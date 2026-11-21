@@ -39,11 +39,11 @@ export interface LocationData {
 }
 
 export interface ExplainableTriageTrace {
-  visual_hazard_factors: string[];
+  visual_hazard_factors?: string[];
   vulnerable_proximity?: string;
-  monsoon_risk_multiplier: boolean;
-  jurisdiction_rationale: string;
-  confidence_score: number;
+  monsoon_risk_multiplier?: boolean;
+  jurisdiction_rationale?: string;
+  confidence_score?: number;
 }
 
 export interface ResolutionAudit {
@@ -60,7 +60,7 @@ export interface ResolutionAudit {
 export interface MasterIncident {
   id: string;
   title: string;
-  description_standardized: string;
+  description_standardized_en: string;
   category: string;
   priority: PriorityTier;
   agency: IndianAgency;

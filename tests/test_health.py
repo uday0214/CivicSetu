@@ -11,4 +11,6 @@ async def test_health_check():
     data = response.json()
     assert data["status"] == "healthy"
     assert "gemini" in data
+    assert "configured" in data["gemini"]
+    assert "reachable" in data["gemini"]
     assert "storage" in data

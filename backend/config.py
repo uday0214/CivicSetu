@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     GOOGLE_CLOUD_PROJECT: str = "civicsetu-demo"
     GCS_BUCKET: str = "civicsetu-media-us-central1"
     
-    # Resilience & Demo Circuit Breaker
-    DEMO_FALLBACK_ON_QUOTA: bool = True
+    # Resilience & Demo Circuit Breaker (Default False for development, True in .env for demos)
+    DEMO_FALLBACK_ON_QUOTA: bool = False
     
     model_config = SettingsConfigDict(
         env_file=".env",

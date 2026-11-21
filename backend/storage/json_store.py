@@ -116,10 +116,13 @@ def get_repository() -> BaseIncidentRepository:
     if _repo_instance is None:
         from backend.config import settings
         if settings.DATA_STORE_MODE == "firestore":
-            # Will be plugged in when cloud firestore is activated
-            logger.info("Using Firestore repository mode")
-            # Fallback to JSON repository for now if google-cloud-firestore not loaded
-            _repo_instance = JSONIncidentRepository()
+            try:
+                from backend.storage.firestore_store import FirestoreIncidentRepository
+                _repo_instance = FirestoreIncidentRepository()
+                logger.info("Using Firestore repository mode")
+            except ImportError:
+                logger.error("DATA_STORE_MODE=firestore but google-cloud-firestore not installed")
+                raise RuntimeError("Firestore mode requires google-cloud-firestore package")
         else:
             logger.info("Using Local JSON repository mode")
             _repo_instance = JSONIncidentRepository()

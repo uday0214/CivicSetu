@@ -12,7 +12,7 @@ export const apiClient = {
   async resetDemoData(): Promise<{ success: boolean; message: string }> {
     const res = await fetch(`${API_BASE}/seed/reset`, { method: 'POST' });
     if (!res.ok) {
-      // In early section 1 before seed route is registered, return simulated success
+      console.warn('[apiClient] /api/seed/reset not implemented; returning local fallback');
       return { success: true, message: 'Demo data reset (local default)' };
     }
     return res.json();
