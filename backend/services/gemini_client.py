@@ -24,8 +24,12 @@ class GeminiClient:
     def _init_client(self):
         if settings.GEMINI_API_KEY:
             try:
-                self._client = genai.Client(api_key=settings.GEMINI_API_KEY)
-                logger.info(f"Initialized Google GenAI client with model: {settings.GEMINI_MODEL}")
+                # v1beta is required for developer/system_instruction and structured response_schema
+                self._client = genai.Client(
+                    api_key=settings.GEMINI_API_KEY,
+                    http_options={"api_version": "v1beta"}
+                )
+                logger.info(f"Initialized Google GenAI client (v1beta) with model: {settings.GEMINI_MODEL}")
             except Exception as e:
                 logger.warning(f"Failed to initialize Google GenAI client: {e}")
                 self._client = None
@@ -82,6 +86,16 @@ class GeminiClient:
                 is_rate_limit = "429" in str(exc) or "ResourceExhausted" in str(exc)
                 logger.warning(f"Gemini API attempt {attempt + 1} failed: {exc}")
                 
+                # If API endpoint rejects developer instructions, inline into contents and retry
+                if "Developer instruction" in str(exc) and config.system_instruction:
+                    logger.info("Retrying without separate Developer instruction config (inlining to prompt)")
+                    config.system_instruction = None
+                    if isinstance(contents, list):
+                        contents = [f"System Instruction:\n{system_instruction}\n"] + contents
+                    else:
+                        contents = f"System Instruction:\n{system_instruction}\n\nContent:\n{contents}"
+                    continue
+
                 if attempt == 0 and not is_rate_limit:
                     await asyncio.sleep(1.0)
                     continue
