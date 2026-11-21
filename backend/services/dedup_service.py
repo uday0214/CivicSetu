@@ -17,6 +17,7 @@ from backend.models.dedup import (
     ReportSubmissionRequest,
     ReportSubmissionResponse,
 )
+from backend.services.geo_office_service import find_nearest_governing_office
 from backend.services.gemini_client import gemini_client
 from backend.storage.json_store import get_repository
 
@@ -359,6 +360,8 @@ async def process_report_submission(req: ReportSubmissionRequest) -> ReportSubmi
         escalation_notice = f" Priority escalated to {new_priority.value}!" if did_escalate else ""
         msg = f"Issue already tracked! You are supporter #{new_score}.{escalation_notice}"
 
+        nearest_office = find_nearest_governing_office(lat=req.lat, lng=req.lng)
+
         return ReportSubmissionResponse(
             is_duplicate=True,
             master_incident_id=incident.incident_id,
@@ -369,6 +372,7 @@ async def process_report_submission(req: ReportSubmissionRequest) -> ReportSubmi
             priority_escalated=did_escalate,
             message_to_citizen=msg,
             master_incident=incident,
+            nearest_governing_office=nearest_office,
         )
 
     else:
@@ -423,6 +427,8 @@ async def process_report_submission(req: ReportSubmissionRequest) -> ReportSubmi
         await repo.create_incident(new_incident.model_dump())
         await repo.add_citizen_report(citizen_report.model_dump())
 
+        nearest_office = find_nearest_governing_office(lat=req.lat, lng=req.lng)
+
         return ReportSubmissionResponse(
             is_duplicate=False,
             master_incident_id=incident_id,
@@ -433,4 +439,5 @@ async def process_report_submission(req: ReportSubmissionRequest) -> ReportSubmi
             priority_escalated=False,
             message_to_citizen="Your report has been registered as a new Master Incident.",
             master_incident=new_incident,
+            nearest_governing_office=nearest_office,
         )

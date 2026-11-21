@@ -130,7 +130,7 @@ export function App() {
   };
 
   const handleReportSubmitted = (_result: ReportSubmissionResponse) => {
-    setCitizenTab('my-reports');
+    // Keep citizen on report page so they can view the assigned office details card
   };
 
   return (

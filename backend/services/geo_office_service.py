@@ -25,6 +25,7 @@ class GoverningOfficeInfo(BaseModel):
     phone: str = Field(..., description="Helpline or control room phone number")
     jurisdiction_agency: str = Field(..., description="Primary agency code (e.g. ULB_MUNICIPAL, DISCOM_ELECTRICAL, etc.)")
     distance_km: Optional[float] = Field(None, description="Calculated distance from reference point in kilometers")
+    maps_url: Optional[str] = Field(None, description="Direct Google Maps navigation / pin link")
 
 
 # Directory of Administrative & Municipal Governing Offices across 4 States
@@ -355,6 +356,8 @@ def find_nearest_governing_office(
         # Fallback to BBMP HQ
         fallback = GOVERNING_OFFICES[0]
         dist = calculate_haversine_distance(lat, lng, fallback["lat"], fallback["lng"])
-        return GoverningOfficeInfo(**fallback, distance_km=dist)
+        maps_link = f"https://www.google.com/maps/search/?api=1&query={fallback['lat']},{fallback['lng']}"
+        return GoverningOfficeInfo(**fallback, distance_km=dist, maps_url=maps_link)
 
-    return GoverningOfficeInfo(**best_office)
+    maps_link = f"https://www.google.com/maps/search/?api=1&query={best_office['lat']},{best_office['lng']}"
+    return GoverningOfficeInfo(**best_office, maps_url=maps_link)

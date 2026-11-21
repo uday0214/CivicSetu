@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from backend.models.enums import PriorityTier, IndianAgency, CivicCategory, IncidentStatus
 from backend.models.schemas import MasterIncident, CitizenReport, ExplainableTriageTrace
+from backend.services.geo_office_service import GoverningOfficeInfo
 
 
 class DedupCandidateSummary(BaseModel):
@@ -77,3 +78,4 @@ class ReportSubmissionResponse(BaseModel):
     priority_escalated: bool = False
     message_to_citizen: str
     master_incident: MasterIncident
+    nearest_governing_office: Optional[GoverningOfficeInfo] = None

@@ -14,6 +14,9 @@ import {
   Loader2,
   Trash2,
   Search,
+  ExternalLink,
+  Phone,
+  Building,
 } from 'lucide-react';
 import { apiClient } from '../../services/apiClient';
 import {
@@ -135,6 +138,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [duplicateMatch, setDuplicateMatch] = useState<DedupCheckResult | null>(null);
   const [submissionFeedback, setSubmissionFeedback] = useState<string | null>(null);
+  const [submittedOffice, setSubmittedOffice] = useState<GoverningOffice | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
@@ -589,9 +593,14 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
     try {
       const result = await apiClient.submitReport(submissionPayload);
       setSubmissionFeedback(result.message_to_citizen);
+      if (result.nearest_governing_office) {
+        setSubmittedOffice(result.nearest_governing_office);
+      } else if (nearestOffice) {
+        setSubmittedOffice(nearestOffice);
+      }
       onReportSubmitted(result);
 
-      // Reset form
+      // Reset media inputs
       setPhotoFile(null);
       setPhotoPreview(null);
       setAudioBlob(null);
@@ -1042,6 +1051,51 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
                 />
               </div>
             </div>
+
+            {/* Nearest Governing Office Preview in AI Triage details */}
+            {nearestOffice && (
+              <div className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-200 space-y-2 mt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-600 font-bold flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5 text-neutral-900" />
+                    Target Governing Office
+                  </span>
+                  {nearestOffice.distance_km !== undefined && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-900 font-bold">
+                      {nearestOffice.distance_km} km away
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <div className="text-xs font-bold text-neutral-950">
+                    {nearestOffice.name}
+                  </div>
+                  <div className="text-[11px] text-neutral-600 leading-snug mt-0.5">
+                    {nearestOffice.address}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-neutral-200/80 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-neutral-700 font-mono">
+                    <Phone className="w-3 h-3 text-neutral-500" />
+                    <span>{nearestOffice.phone}</span>
+                  </div>
+                  {nearestOffice.maps_url && (
+                    <a
+                      href={nearestOffice.maps_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      <MapPin className="w-3 h-3" />
+                      <span>Open Google Maps</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <button
@@ -1064,11 +1118,58 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
         </div>
       )}
 
-      {/* Submission Feedback Toast */}
+      {/* Submission Feedback & Assigned Governing Authority Details Card */}
       {submissionFeedback && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-semibold flex items-center gap-2 animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>{submissionFeedback}</span>
+        <div className="p-5 rounded-2xl bg-white border border-emerald-300 shadow-sm space-y-3 animate-fade-in">
+          <div className="flex items-center gap-2.5 text-emerald-800 text-xs font-bold">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span className="text-sm font-black tracking-tight">{submissionFeedback}</span>
+          </div>
+
+          {submittedOffice && (
+            <div className="pt-2 border-t border-neutral-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-500 font-bold flex items-center gap-1.5">
+                  <Building className="w-3.5 h-3.5 text-neutral-800" />
+                  Assigned Governing Office
+                </span>
+                {submittedOffice.distance_km !== undefined && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                    {submittedOffice.distance_km} km away
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <h4 className="text-xs font-bold text-neutral-950">
+                  {submittedOffice.name}
+                </h4>
+                <p className="text-[11px] text-neutral-600 mt-0.5">
+                  {submittedOffice.address}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100 text-xs">
+                <div className="flex items-center gap-1.5 text-neutral-700 font-mono text-[11px]">
+                  <Phone className="w-3.5 h-3.5 text-neutral-500" />
+                  <span className="font-semibold">{submittedOffice.phone}</span>
+                </div>
+
+                {submittedOffice.maps_url && (
+                  <a
+                    href={submittedOffice.maps_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-950 hover:text-black bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 px-3 py-1.5 rounded-full transition active:translate-y-0.5"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-rose-600" />
+                    <span>View on Google Maps</span>
+                    <ExternalLink className="w-3 h-3 text-neutral-500" />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

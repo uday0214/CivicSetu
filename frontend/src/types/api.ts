@@ -160,6 +160,7 @@ export interface GoverningOffice {
   phone: string;
   jurisdiction_agency: string;
   distance_km?: number | null;
+  maps_url?: string | null;
 }
 
 export interface IntakeSubmissionResult {
@@ -231,6 +232,7 @@ export interface ReportSubmissionResponse {
   priority_escalated: boolean;
   message_to_citizen: string;
   master_incident: MasterIncident;
+  nearest_governing_office?: GoverningOffice | null;
 }
 
 export interface ResolutionSubmitResult {
