@@ -30,6 +30,12 @@ from backend.models.dedup import (
     ReportSubmissionRequest,
     ReportSubmissionResponse,
 )
+from backend.models.audit import (
+    ResolutionAuditResponse,
+    ResolutionSubmitResult,
+    CitizenReopenRequest,
+    CitizenReopenResult,
+)
 from backend.models.state_machine import (
     is_valid_status_transition,
     validate_resolution_closure,
@@ -61,6 +67,10 @@ __all__ = [
     "DedupCheckResult",
     "ReportSubmissionRequest",
     "ReportSubmissionResponse",
+    "ResolutionAuditResponse",
+    "ResolutionSubmitResult",
+    "CitizenReopenRequest",
+    "CitizenReopenResult",
     "is_valid_status_transition",
     "validate_resolution_closure",
     "compute_sla_deadline",

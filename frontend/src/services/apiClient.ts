@@ -6,6 +6,10 @@ import {
   DedupCheckResult,
   ReportSubmissionRequest,
   ReportSubmissionResponse,
+  ResolutionSubmitResult,
+  CitizenReopenRequest,
+  CitizenReopenResult,
+  IncidentStatus,
 } from '../types/api';
 
 const API_BASE = '/api';
@@ -99,6 +103,44 @@ export const apiClient = {
       method: 'POST',
     });
     if (!res.ok) throw new Error('Upvote failed');
+    return res.json();
+  },
+
+  async resolveIncident(incidentId: string, formData: FormData): Promise<ResolutionSubmitResult> {
+    const res = await fetch(`${API_BASE}/incidents/${incidentId}/resolve`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Resolution submission failed' }));
+      throw new Error(err.detail || 'Resolution submission failed');
+    }
+    return res.json();
+  },
+
+  async reopenIncident(incidentId: string, request: CitizenReopenRequest): Promise<CitizenReopenResult> {
+    const res = await fetch(`${API_BASE}/incidents/${incidentId}/reopen`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Reopen request failed' }));
+      throw new Error(err.detail || 'Reopen request failed');
+    }
+    return res.json();
+  },
+
+  async updateIncidentStatus(incidentId: string, status: IncidentStatus): Promise<{ success: boolean; incident_id: string; status: IncidentStatus }> {
+    const res = await fetch(`${API_BASE}/incidents/${incidentId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Status update failed' }));
+      throw new Error(err.detail || 'Status update failed');
+    }
     return res.json();
   },
 };

@@ -177,6 +177,30 @@ export interface ReportSubmissionResponse {
   master_incident: MasterIncident;
 }
 
+export interface ResolutionSubmitResult {
+  incident_id: string;
+  status: IncidentStatus;
+  audit_status: AuditStatus;
+  audit_confidence: number;
+  evidence_notes: string;
+  before_photo_url: string;
+  after_photo_url: string;
+  citizen_reopen_window_expires?: string | null;
+  message: string;
+}
+
+export interface CitizenReopenRequest {
+  citizen_contact?: string;
+  reopen_reason: string;
+}
+
+export interface CitizenReopenResult {
+  incident_id: string;
+  status: IncidentStatus;
+  reopened_at: string;
+  message: string;
+}
+
 export interface SystemStatus {
   status: string;
   service: string;

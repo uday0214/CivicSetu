@@ -17,6 +17,11 @@ class MediaStorageAdapter(ABC):
         """Saves binary media and returns a servable URL."""
         pass
 
+    @abstractmethod
+    async def read_bytes(self, url: str) -> Optional[bytes]:
+        """Reads binary media from a stored URL."""
+        pass
+
 
 class LocalMediaStorage(MediaStorageAdapter):
     """Stores media files locally in backend/uploads/ and returns servable relative path."""
@@ -47,6 +52,19 @@ class LocalMediaStorage(MediaStorageAdapter):
 
         logger.info(f"Saved media file locally: {filepath}")
         return f"/uploads/{filename}"
+
+    async def read_bytes(self, url: str) -> Optional[bytes]:
+        if not url:
+            return None
+        filename = os.path.basename(url)
+        filepath = os.path.join(self.upload_dir, filename)
+        if os.path.exists(filepath):
+            try:
+                with open(filepath, "rb") as f:
+                    return f.read()
+            except Exception as e:
+                logger.error(f"Failed to read local media {filepath}: {e}")
+        return None
 
 
 class GCSMediaStorage(MediaStorageAdapter):
@@ -85,6 +103,18 @@ class GCSMediaStorage(MediaStorageAdapter):
 
         logger.info(f"Uploaded media to GCS: gs://{self.bucket_name}/{filename}")
         return f"https://storage.googleapis.com/{self.bucket_name}/{filename}"
+
+    async def read_bytes(self, url: str) -> Optional[bytes]:
+        if not url:
+            return None
+        try:
+            filename = os.path.basename(url)
+            bucket = self._get_bucket()
+            blob = bucket.blob(filename)
+            return blob.download_as_bytes()
+        except Exception as e:
+            logger.error(f"Failed to read GCS media {url}: {e}")
+            return None
 
 
 def get_media_storage() -> MediaStorageAdapter:

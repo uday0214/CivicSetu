@@ -139,10 +139,10 @@ This roadmap is modularized into sequentially numbered sections (`Section 1`, `S
 ## 5. Closed-Loop AI Verification & Resolution Audit Engine
 *Goal: Prevent fake closures and shoddy contractor repairs via multimodal Before/After visual comparison.*
 
-- **5.1. Contractor Closure Dispatch Payload**
+- [x] **5.1. Contractor Closure Dispatch Payload**
   - When field staff marks an issue resolved, require an "After" photo upload.
   - GPS coordinates on closure upload are **optional** (auto-defaulting to the `MasterIncident`'s coordinates when omitted) so laptop-based live demos using local test images are never blocked.
-- **5.2. Gemini Multimodal Resolution Auditor**
+- [x] **5.2. Gemini Multimodal Resolution Auditor**
   - Send the original citizen "Before" photo and contractor "After" photo in a dual-image prompt to Gemini.
   - Instruct Gemini to evaluate:
     1. **Site Match:** Are background landmarks, poles, curbs, and buildings consistent?
@@ -151,7 +151,7 @@ This roadmap is modularized into sequentially numbered sections (`Section 1`, `S
        - `VERIFIED_FIXED`: Same site, defect durably repaired.
        - `PARTIAL_FIX`: Same site, but incomplete repair.
        - `REJECTED_MISMATCH`: Different location, fraudulent submission, or defect unresolved.
-- **5.3. State Transition & Citizen Reopen Loop**
+- [x] **5.3. State Transition & Citizen Reopen Loop**
   - If `audit_status == VERIFIED_FIXED`:
     - Transition `MasterIncident.status` to **`RESOLVED`**.
     - Set 48-hour citizen reopen window.
@@ -159,7 +159,7 @@ This roadmap is modularized into sequentially numbered sections (`Section 1`, `S
     - Keep `MasterIncident.status` as **`IN_PROGRESS`**.
     - Set `resolution_audit.audit_status = REJECTED_MISMATCH`.
     - Attach `evidence_notes` to alert the admin supervisor and flag the contractor closure.
-- **Acceptance Criteria for Section 5:**
+- **Acceptance Criteria for Section 5 (PASSED):**
   - Mock test with a patched pothole sets status `RESOLVED` with `audit_status: VERIFIED_FIXED`.
   - Mock test with an unrelated photo leaves status `IN_PROGRESS` with `audit_status: REJECTED_MISMATCH` and evidence notes.
 
