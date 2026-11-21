@@ -14,11 +14,126 @@ import {
   SystemicBriefingResponse,
   IncidentOverrideRequest,
   KpiSummaryResponse,
+  AuthUser,
+  AuthResponse,
+  AssetRecord,
+  AssetStats,
 } from '../types/api';
 
 const API_BASE = '/api';
 
 export const apiClient = {
+  // Session & Local Storage
+  getToken(): string | null {
+    return localStorage.getItem('civicsetu_token');
+  },
+  setToken(token: string | null) {
+    if (token) localStorage.setItem('civicsetu_token', token);
+    else localStorage.removeItem('civicsetu_token');
+  },
+  getStoredUser(): AuthUser | null {
+    const raw = localStorage.getItem('civicsetu_user');
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  },
+  setStoredUser(user: AuthUser | null) {
+    if (user) localStorage.setItem('civicsetu_user', JSON.stringify(user));
+    else localStorage.removeItem('civicsetu_user');
+  },
+  logout() {
+    localStorage.removeItem('civicsetu_token');
+    localStorage.removeItem('civicsetu_user');
+  },
+
+  // Auth Endpoints
+  async login(email: string, password: string): Promise<AuthResponse> {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Login failed' }));
+      throw new Error(err.detail || 'Invalid email or password');
+    }
+    const data: AuthResponse = await res.json();
+    this.setToken(data.token);
+    this.setStoredUser(data.user);
+    return data;
+  },
+
+  async register(userData: {
+    email: string;
+    password: string;
+    role: 'citizen' | 'admin';
+    name: string;
+    phone?: string;
+    department?: string;
+    ward_id?: string;
+  }): Promise<AuthResponse> {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Registration failed' }));
+      throw new Error(err.detail || 'Registration failed');
+    }
+    const data: AuthResponse = await res.json();
+    this.setToken(data.token);
+    this.setStoredUser(data.user);
+    return data;
+  },
+
+  async demoLogin(role: 'citizen' | 'admin'): Promise<AuthResponse> {
+    const res = await fetch(`${API_BASE}/auth/demo-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Demo login failed' }));
+      throw new Error(err.detail || 'Demo login failed');
+    }
+    const data: AuthResponse = await res.json();
+    this.setToken(data.token);
+    this.setStoredUser(data.user);
+    return data;
+  },
+
+  async getMe(): Promise<AuthUser> {
+    const token = this.getToken();
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      throw new Error('Not authenticated');
+    }
+    const user = await res.json();
+    this.setStoredUser(user);
+    return user;
+  },
+
+  // Assets Management Endpoints
+  async listAssets(incidentId?: string, assetType?: string): Promise<AssetRecord[]> {
+    const params = new URLSearchParams();
+    if (incidentId) params.append('incident_id', incidentId);
+    if (assetType) params.append('asset_type', assetType);
+    const res = await fetch(`${API_BASE}/assets?${params.toString()}`);
+    if (!res.ok) throw new Error('Failed to load assets');
+    return res.json();
+  },
+
+  async getAssetStats(): Promise<AssetStats> {
+    const res = await fetch(`${API_BASE}/assets/stats`);
+    if (!res.ok) throw new Error('Failed to load asset stats');
+    return res.json();
+  },
   async getHealth(): Promise<SystemStatus> {
     const res = await fetch(`${API_BASE}/health`);
     if (!res.ok) throw new Error('Health check failed');

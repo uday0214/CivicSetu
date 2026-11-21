@@ -9,8 +9,14 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
     
-    # Persistence Mode: "memory" (local development) or "firestore" (GCP production)
-    DATA_STORE_MODE: Literal["memory", "firestore"] = "memory"
+    # Persistence Mode: "sqlite" (default local), "memory" (json), or "firestore" (GCP production)
+    DATA_STORE_MODE: Literal["sqlite", "memory", "firestore"] = "sqlite"
+    SQLITE_DB_PATH: str = "backend/data/civicsetu.db"
+    
+    # JWT Authentication
+    JWT_SECRET: str = "civicsetu-secret-jwt-key-2025-bbmp"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_MINUTES: int = 10080  # 7 days
     
     # Server configuration
     PORT: int = 8000

@@ -275,6 +275,45 @@ export interface KpiSummaryResponse {
   avg_resolution_time_hours: number;
 }
 
+export interface AuthUser {
+  id: number;
+  email: string;
+  role: 'citizen' | 'admin';
+  name: string;
+  phone?: string | null;
+  department?: string | null;
+  ward_id?: string | null;
+  created_at: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  token_type: string;
+  user: AuthUser;
+}
+
+export interface AssetRecord {
+  asset_id: string;
+  filename: string;
+  file_url: string;
+  file_path?: string | null;
+  mime_type: string;
+  size_bytes: number;
+  asset_type: string;
+  incident_id?: string | null;
+  report_id?: string | null;
+  uploaded_by?: string | null;
+  created_at: string;
+  metadata_json?: string | null;
+}
+
+export interface AssetStats {
+  total_assets: number;
+  total_bytes: number;
+  total_mb: number;
+  breakdown_by_type: Record<string, number>;
+}
+
 export interface SystemStatus {
   status: string;
   service: string;

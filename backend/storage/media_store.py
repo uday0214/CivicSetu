@@ -4,6 +4,8 @@ import os
 import uuid
 import logging
 from abc import ABC, abstractmethod
+from datetime import datetime, timezone
+from typing import Optional
 from backend.config import settings
 
 logger = logging.getLogger("civicsetu.storage")
@@ -50,8 +52,35 @@ class LocalMediaStorage(MediaStorageAdapter):
         with open(filepath, "wb") as f:
             f.write(data)
 
+        file_url = f"/uploads/{filename}"
         logger.info(f"Saved media file locally: {filepath}")
-        return f"/uploads/{filename}"
+
+        # Record asset metadata in lightweight database
+        try:
+            from backend.storage.sqlite_store import get_sqlite_repository
+            repo = get_sqlite_repository()
+            asset_type = "photo"
+            if "audio" in mime_type:
+                asset_type = "audio"
+            elif "after" in filename_prefix:
+                asset_type = "audit_after"
+            elif "before" in filename_prefix:
+                asset_type = "audit_before"
+
+            await repo.record_asset({
+                "asset_id": uuid.uuid4().hex[:16],
+                "filename": filename,
+                "file_url": file_url,
+                "file_path": filepath,
+                "mime_type": mime_type,
+                "size_bytes": len(data),
+                "asset_type": asset_type,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+        except Exception as e:
+            logger.warning(f"Could not record asset in SQLite store: {e}")
+
+        return file_url
 
     async def read_bytes(self, url: str) -> Optional[bytes]:
         if not url:

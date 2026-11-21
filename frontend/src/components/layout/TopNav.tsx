@@ -1,9 +1,12 @@
 import React from 'react';
-import { ArrowUpRight, RotateCcw, Sparkles } from 'lucide-react';
+import { ArrowUpRight, RotateCcw, Sparkles, LogOut, User, Shield } from 'lucide-react';
+import { AuthUser } from '../../types/api';
 
 interface TopNavProps {
+  currentUser: AuthUser | null;
   activeRole: 'citizen' | 'admin';
   onRoleChange: (role: 'citizen' | 'admin') => void;
+  onLogout: () => void;
   onResetDemo: () => void;
   isFallback?: boolean;
   activeTab?: 'report' | 'feed' | 'my-reports';
@@ -11,8 +14,10 @@ interface TopNavProps {
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
+  currentUser,
   activeRole,
   onRoleChange,
+  onLogout,
   onResetDemo,
   isFallback = false,
   activeTab = 'report',
@@ -68,8 +73,24 @@ export const TopNav: React.FC<TopNavProps> = ({
         </div>
       )}
 
-      {/* Right: Reset Demo + Role Pill Button */}
+      {/* Right: User Identity Badge + Reset Demo + Role Switch / Logout */}
       <div className="flex items-center gap-3 sm:gap-4">
+        {currentUser && (
+          <div className="hidden xl:flex items-center gap-2 text-[11px] font-mono px-3 py-1 rounded-full bg-neutral-100 border border-neutral-300">
+            {currentUser.role === 'admin' ? (
+              <Shield className="w-3.5 h-3.5 text-blue-600" />
+            ) : (
+              <User className="w-3.5 h-3.5 text-emerald-600" />
+            )}
+            <span className="font-bold text-neutral-900 truncate max-w-[150px]">
+              {currentUser.name}
+            </span>
+            <span className="text-[10px] text-neutral-500 uppercase">
+              ({currentUser.role})
+            </span>
+          </div>
+        )}
+
         <button
           onClick={onResetDemo}
           title="Reset seeded Indian city dataset"
@@ -84,12 +105,23 @@ export const TopNav: React.FC<TopNavProps> = ({
           <span>{isFallback ? 'Demo Fallback' : 'Gemini 2.5 Flash'}</span>
         </div>
 
+        {/* Portal Switch Button */}
         <button
           onClick={() => onRoleChange(activeRole === 'citizen' ? 'admin' : 'citizen')}
-          className="bg-neutral-950 text-white hover:bg-neutral-800 transition px-5 py-2.5 rounded-full text-xs font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-sm active:translate-y-0.5"
+          className="bg-neutral-950 text-white hover:bg-neutral-800 transition px-4 py-2 rounded-full text-xs font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-sm active:translate-y-0.5"
+          title="Switch between Citizen and Municipal Admin Portal"
         >
           <span>{activeRole === 'citizen' ? 'Admin Portal' : 'Citizen View'}</span>
           <ArrowUpRight className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Logout / Switch Role Button */}
+        <button
+          onClick={onLogout}
+          title="Sign out or switch authorization account"
+          className="flex items-center gap-1 text-[11px] font-mono uppercase font-bold text-neutral-700 hover:text-rose-600 transition p-2 rounded-full border border-neutral-300 hover:border-rose-400"
+        >
+          <LogOut className="w-3.5 h-3.5" />
         </button>
       </div>
     </header>

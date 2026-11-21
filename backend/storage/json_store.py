@@ -131,6 +131,10 @@ def get_repository() -> BaseIncidentRepository:
             except ImportError:
                 logger.error("DATA_STORE_MODE=firestore but google-cloud-firestore not installed")
                 raise RuntimeError("Firestore mode requires google-cloud-firestore package")
+        elif settings.DATA_STORE_MODE == "sqlite":
+            from backend.storage.sqlite_store import get_sqlite_repository
+            logger.info("Using SQLite repository mode")
+            _repo_instance = get_sqlite_repository()
         else:
             logger.info("Using Local JSON repository mode")
             _repo_instance = JSONIncidentRepository()

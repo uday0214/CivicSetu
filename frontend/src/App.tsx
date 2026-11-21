@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TopNav } from './components/layout/TopNav';
+import { AuthPage } from './components/auth/AuthPage';
 import { SnapSpeakForm, NearbyFeed, MyReportsList } from './components/citizen';
 import { KpiStrip } from './components/admin/KpiStrip';
 import { CommandMap } from './components/admin/CommandMap';
@@ -13,11 +14,13 @@ import {
   MasterIncident,
   KpiSummaryResponse,
   SystemicBriefingResponse,
+  AuthUser,
 } from './types/api';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 
 export function App() {
-  const [activeRole, setActiveRole] = useState<'citizen' | 'admin'>('citizen');
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => apiClient.getStoredUser());
+  const [activeRole, setActiveRole] = useState<'citizen' | 'admin'>(() => currentUser?.role || 'citizen');
   const [citizenTab, setCitizenTab] = useState<'report' | 'feed' | 'my-reports'>('report');
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
@@ -36,7 +39,36 @@ export function App() {
     apiClient.getHealth()
       .then(setSystemStatus)
       .catch((err) => console.warn('Could not fetch initial health status:', err));
+
+    if (apiClient.getToken() && !currentUser) {
+      apiClient.getMe()
+        .then((user) => {
+          setCurrentUser(user);
+          setActiveRole(user.role);
+        })
+        .catch(() => {
+          apiClient.logout();
+          setCurrentUser(null);
+        });
+    }
   }, []);
+
+  // Sync role with logged in user if changed
+  useEffect(() => {
+    if (currentUser) {
+      setActiveRole(currentUser.role);
+    }
+  }, [currentUser]);
+
+  const handleAuthenticated = (user: AuthUser) => {
+    setCurrentUser(user);
+    setActiveRole(user.role);
+  };
+
+  const handleLogout = () => {
+    apiClient.logout();
+    setCurrentUser(null);
+  };
 
   // Fetch Admin Data when role switches to Admin
   useEffect(() => {
@@ -101,11 +133,17 @@ export function App() {
     setCitizenTab('my-reports');
   };
 
+  if (!currentUser) {
+    return <AuthPage onAuthenticated={handleAuthenticated} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-neutral-950 font-sans selection:bg-neutral-900 selection:text-white">
       <TopNav
+        currentUser={currentUser}
         activeRole={activeRole}
         onRoleChange={setActiveRole}
+        onLogout={handleLogout}
         onResetDemo={handleResetDemo}
         isFallback={systemStatus?.gemini?.fallback_circuit_breaker_enabled && !systemStatus?.gemini?.configured}
         activeTab={citizenTab}

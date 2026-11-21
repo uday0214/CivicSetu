@@ -12,6 +12,8 @@ from backend.routes.intake import router as intake_router
 from backend.routes.incidents import router as incidents_router
 from backend.routes.analytics import router as analytics_router
 from backend.routes.seed import router as seed_router
+from backend.routes.auth import router as auth_router
+from backend.routes.assets import router as assets_router
 
 app = FastAPI(
     title="CivicSetu API",
@@ -30,6 +32,8 @@ app.add_middleware(
 
 # Register API routes
 app.include_router(health_router)
+app.include_router(auth_router)
+app.include_router(assets_router)
 app.include_router(intake_router)
 app.include_router(incidents_router)
 app.include_router(analytics_router)
