@@ -130,6 +130,12 @@ export function App() {
     }
   };
 
+  const handleGoHome = () => {
+    setActiveRole('citizen');
+    setCitizenTab('report');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleReportSubmitted = (_result: ReportSubmissionResponse) => {
     // Keep citizen on report page so they can view the assigned office details card
   };
@@ -146,6 +152,7 @@ export function App() {
         onResetDemo={handleResetDemo}
         activeTab={citizenTab}
         onTabChange={setCitizenTab}
+        onGoHome={handleGoHome}
       />
 
       {/* Temporary Toast Notification for Demo Reset */}

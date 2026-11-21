@@ -12,6 +12,7 @@ interface TopNavProps {
   onResetDemo?: () => void;
   activeTab?: 'report' | 'feed' | 'my-reports';
   onTabChange?: (tab: 'report' | 'feed' | 'my-reports') => void;
+  onGoHome?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -22,13 +23,29 @@ export const TopNav: React.FC<TopNavProps> = ({
   onLogout,
   activeTab = 'report',
   onTabChange,
+  onGoHome,
 }) => {
+  const handleLogoClick = () => {
+    if (onGoHome) {
+      onGoHome();
+    } else {
+      onRoleChange('citizen');
+      onTabChange?.('report');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <header className="h-16 bg-white text-neutral-950 border-b border-neutral-900 px-6 sm:px-12 flex items-center justify-between sticky top-0 z-50 select-none">
-      {/* Left: Brand // CivicSetu Logo */}
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => onTabChange?.('report')}>
+      {/* Left: Brand // CivicSetu Logo (Home Link) */}
+      <button
+        type="button"
+        className="flex items-center gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-black rounded-lg p-1 -ml-1 transition hover:opacity-85 text-left"
+        onClick={handleLogoClick}
+        title="CivicSetu Home"
+      >
         <CivicSetuLogo size={36} />
-      </div>
+      </button>
 
       {/* Center: Clean Navigation Links */}
       {activeRole === 'citizen' && onTabChange ? (
