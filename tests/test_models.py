@@ -8,6 +8,7 @@ from backend.models.enums import (
     IndianAgency,
     EscalationTier,
     AuditStatus,
+    CivicCategory,
     AGENCY_METADATA,
     MUNICIPAL_WARDS,
 )
@@ -49,15 +50,15 @@ def test_municipal_wards():
 
 
 def test_master_incident_serialization():
-    """Verify MasterIncident serializes with strict snake_case wire format."""
+    """Verify MasterIncident serializes with strict snake_case wire format conforming to CONTEXT.md §4."""
     now = datetime.now(timezone.utc)
     future = now + timedelta(hours=12)
 
     incident = MasterIncident(
-        id="CS-BLR-1001",
+        incident_id="CS-BLR-1001",
         title="Deep Pothole Submerged in Water",
         description_standardized_en="Deep pothole (~2x1m) on 100 Feet Road creating two-wheeler hazard.",
-        category="Roads & Footpaths",
+        category=CivicCategory.ROADS_FOOTPATHS,
         priority=PriorityTier.P0_CRITICAL,
         agency=IndianAgency.STATE_PWD,
         ward_id="Ward 14 - Indiranagar",
@@ -71,18 +72,37 @@ def test_master_incident_serialization():
         triage_trace=ExplainableTriageTrace(
             visual_hazard_factors=["Water depth obscures edge"],
             vulnerable_proximity="40m from metro station",
-            monsoon_risk_multiplier=True,
+            monsoon_multiplier=True,
             jurisdiction_rationale="100 Feet Road is a state arterial road under PWD",
             confidence_score=0.95,
         ),
     )
 
     dumped = incident.model_dump()
-    assert dumped["id"] == "CS-BLR-1001"
+    assert dumped["incident_id"] == "CS-BLR-1001"
+    assert incident.id == "CS-BLR-1001"
+    assert dumped["category"] == "Roads & Footpaths"
     assert "description_standardized_en" in dumped
     assert "community_impact_score" in dumped
     assert "escalation_tier" in dumped
     assert dumped["escalation_tier"] == EscalationTier.LEVEL_1_WARD_JE
+    assert dumped["triage_trace"]["monsoon_multiplier"] is True
+
+
+def test_sla_deadline_auto_population():
+    """Verify sla_deadline is auto-populated using compute_sla_deadline when omitted."""
+    inc = MasterIncident(
+        incident_id="CS-AUTO-1",
+        title="Open Drain",
+        description_standardized_en="Open drain overflow",
+        category=CivicCategory.WATER_DRAINAGE,
+        priority=PriorityTier.P0_CRITICAL,
+        agency=IndianAgency.WATER_SEWERAGE_BOARD,
+        ward_id="Ward 14 - Indiranagar",
+        location=LocationData(lat=12.97, lng=77.64),
+    )
+    assert inc.sla_deadline != ""
+    assert "T" in inc.sla_deadline  # Valid ISO format
 
 
 def test_escalation_ladder_computation():
@@ -91,10 +111,10 @@ def test_escalation_ladder_computation():
 
     # 1. Within SLA -> Level 1 Ward Junior Engineer
     inc_within_sla = MasterIncident(
-        id="CS-1",
+        incident_id="CS-1",
         title="Test",
         description_standardized_en="Test desc",
-        category="Roads",
+        category=CivicCategory.ROADS_FOOTPATHS,
         priority=PriorityTier.P2_MEDIUM,
         agency=IndianAgency.ULB_MUNICIPAL,
         ward_id="Ward 14 - Indiranagar",
@@ -105,10 +125,10 @@ def test_escalation_ladder_computation():
 
     # 2. Overdue P2 (past deadline by 2 hours) -> Level 2 Zonal Officer
     inc_overdue_p2 = MasterIncident(
-        id="CS-2",
+        incident_id="CS-2",
         title="Test Overdue P2",
         description_standardized_en="Test desc",
-        category="Sanitation",
+        category=CivicCategory.SANITATION_WASTE,
         priority=PriorityTier.P2_MEDIUM,
         agency=IndianAgency.ULB_MUNICIPAL,
         ward_id="Ward 14 - Indiranagar",
@@ -119,10 +139,10 @@ def test_escalation_ladder_computation():
 
     # 3. Any overdue P0_CRITICAL (even 5 minutes past deadline) -> Level 3 Municipal Commissioner
     inc_overdue_p0 = MasterIncident(
-        id="CS-3",
+        incident_id="CS-3",
         title="Critical Live Wire Overdue",
         description_standardized_en="Live wire hanging into rainwater puddle",
-        category="Electricity",
+        category=CivicCategory.ELECTRICITY_LIGHTING,
         priority=PriorityTier.P0_CRITICAL,
         agency=IndianAgency.DISCOM_ELECTRICAL,
         ward_id="Ward 14 - Indiranagar",
@@ -133,10 +153,10 @@ def test_escalation_ladder_computation():
 
     # 4. Overdue by > 24 hours (even for P2) -> Level 3 Municipal Commissioner
     inc_severely_overdue = MasterIncident(
-        id="CS-4",
+        incident_id="CS-4",
         title="Stalled Garbage Dump",
         description_standardized_en="Garbage uncollected for 5 days",
-        category="Sanitation",
+        category=CivicCategory.SANITATION_WASTE,
         priority=PriorityTier.P2_MEDIUM,
         agency=IndianAgency.ULB_MUNICIPAL,
         ward_id="Ward 14 - Indiranagar",

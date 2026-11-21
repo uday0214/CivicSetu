@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from typing import List, Optional
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, model_validator
 
 from backend.models.enums import (
     PriorityTier,
@@ -12,6 +12,7 @@ from backend.models.enums import (
     AuditStatus,
     CivicCategory,
 )
+from backend.models.state_machine import compute_sla_deadline
 
 
 class LocationData(BaseModel):
@@ -30,7 +31,7 @@ class ExplainableTriageTrace(BaseModel):
         None,
         description="Proximity to sensitive public locations (e.g. school gate, hospital entrance)"
     )
-    monsoon_risk_multiplier: Optional[bool] = Field(
+    monsoon_multiplier: Optional[bool] = Field(
         False,
         description="True if seasonal rain exacerbates risk (drowning in manhole, electrocution)"
     )
@@ -99,13 +100,13 @@ class CitizenReport(BaseModel):
 
 
 class MasterIncident(BaseModel):
-    id: str = Field(..., description="Canonical ticket ID, e.g. CS-BLR-1042")
+    incident_id: str = Field(..., description="Canonical ticket ID, e.g. CS-BLR-1042")
     title: str = Field(..., description="Concise English title of the civic issue")
     description_standardized_en: str = Field(
         ...,
         description="Standardized English description synthesized from citizen input"
     )
-    category: str = Field(..., description="Civic category, e.g. Roads & Footpaths")
+    category: CivicCategory = Field(..., description="Civic category, e.g. Roads & Footpaths")
     priority: PriorityTier = Field(..., description="Severity tier P0 to P3")
     agency: IndianAgency = Field(..., description="Routed Indian administrative agency")
     ward_id: str = Field(..., description="Indian ward identifier, e.g. Ward 14 - Indiranagar")
@@ -132,11 +133,22 @@ class MasterIncident(BaseModel):
         description="ISO 8601 last modified timestamp"
     )
     sla_deadline: str = Field(
-        ...,
+        default="",
         description="ISO 8601 SLA deadline for municipal resolution"
     )
     triage_trace: Optional[ExplainableTriageTrace] = None
     resolution_audit: Optional[ResolutionAudit] = None
+
+    @model_validator(mode="after")
+    def set_sla_deadline(self) -> "MasterIncident":
+        if not self.sla_deadline:
+            self.sla_deadline = compute_sla_deadline(self.priority)
+        return self
+
+    @property
+    def id(self) -> str:
+        """Convenience property for incident_id."""
+        return self.incident_id
 
     @computed_field
     @property
@@ -162,5 +174,4 @@ class MasterIncident(BaseModel):
 
             return EscalationTier.LEVEL_2_ZONAL_OFFICER
         except Exception:
-            # Fallback if timestamp parse fails
             return EscalationTier.LEVEL_1_WARD_JE

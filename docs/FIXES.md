@@ -262,3 +262,251 @@ echo "✅ P1 + P2.4 fixes applied. Run tests to verify."
 - P1 items should be committed before starting Section 2 work
 - P2/P3 items can be batched into a follow-up PR
 - No changes to public API contracts — only internal quality improvements
+
+---
+
+# CivicSetu — Section 2 Stress Test Fixes
+
+**Audit Target:** Commit `8b8818d` (Section 2: Indian Administrative Hierarchy, Domain Models, and State Machine)  
+**Date:** 2026-11-21  
+**Status:** All tests pass (7/7); 8 wire-format & compliance issues found against CONTEXT.md authoritative spec
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| **Critical (breaks wire contract)** | **2** |
+| **P1 — Fix before Section 3** | **4** |
+| P2 — Improve robustness | 2 |
+| P3 — Nice to have | 0 |
+
+---
+
+## Critical — Wire Format Contract Violations (CONTEXT.md §4)
+
+These break the canonical `snake_case` wire format mandated in CONTEXT.md §0 Guardrail #3 and §4 authoritative schemas.
+
+### 1. `id` vs `incident_id` — MasterIncident Primary Key
+**File:** `backend/models/schemas.py:89`, `frontend/src/types/api.ts:54`  
+**Issue:** CONTEXT.md §4.1 canonical example uses `"incident_id": "inc_982341"` but backend model uses `id: str` and frontend uses `id: string`. This violates the mandatory wire-format contract.
+
+**Fix (Backend):**
+```python
+# backend/models/schemas.py
+class MasterIncident(BaseModel):
+    incident_id: str = Field(..., description="Canonical ticket ID, e.g. CS-BLR-1042")  # was: id
+    # ... rest unchanged
+```
+
+**Fix (Frontend):**
+```typescript
+// frontend/src/types/api.ts
+export interface MasterIncident {
+  incident_id: string;  // was: id
+  // ... rest unchanged
+}
+```
+
+**Verify:** `grep -n "incident_id" backend/models/schemas.py frontend/src/types/api.ts`
+
+---
+
+### 2. `monsoon_risk_multiplier` vs `monsoon_multiplier` — Triage Trace Field
+**File:** `backend/models/schemas.py:35`, `frontend/src/types/api.ts:37`  
+**Issue:** CONTEXT.md §4.3 shows `"monsoon_multiplier": true` but backend uses `monsoon_risk_multiplier` and frontend mirrors it. Wire format mismatch.
+
+**Fix (Backend):**
+```python
+# backend/models/schemas.py
+class ExplainableTriageTrace(BaseModel):
+    monsoon_multiplier: Optional[bool] = Field(  # was: monsoon_risk_multiplier
+        False,
+        description="True if seasonal rain exacerbates risk (drowning in manhole, electrocution)"
+    )
+```
+
+**Fix (Frontend):**
+```typescript
+// frontend/src/types/api.ts
+export interface ExplainableTriageTrace {
+  // ...
+  monsoon_multiplier?: boolean;  // was: monsoon_risk_multiplier
+  // ...
+}
+```
+
+**Verify:** `grep -n "monsoon" backend/models/schemas.py frontend/src/types/api.ts`
+
+---
+
+## P1 — Fix Before Section 3
+
+### 3. `CivicCategory` Enum Defined But Not Enforced
+**File:** `backend/models/enums.py:60`, `backend/models/schemas.py:101`  
+**Issue:** `CivicCategory` enum exists with 5 canonical values (ROADS_FOOTPATHS, SANITATION_WASTE, WATER_DRAINAGE, ELECTRICITY_LIGHTING, PUBLIC_SAFETY) but `MasterIncident.category` is typed as `str` instead of `CivicCategory`. No validation at model level.
+
+**Fix (Backend):**
+```python
+# backend/models/schemas.py
+from backend.models.enums import CivicCategory
+
+class MasterIncident(BaseModel):
+    # ...
+    category: CivicCategory = Field(..., description="Civic category, e.g. Roads & Footpaths")  # was: str
+    # ...
+```
+
+**Fix (Frontend - add type):**
+```typescript
+// frontend/src/types/api.ts
+export type CivicCategory = 
+  | 'Roads & Footpaths'
+  | 'Sanitation & Waste'
+  | 'Water & Drainage'
+  | 'Electricity & Lighting'
+  | 'Public Safety';
+
+export interface MasterIncident {
+  // ...
+  category: CivicCategory;  // was: string
+  // ...
+}
+```
+
+**Verify:** `grep -n "category:" backend/models/schemas.py`
+
+---
+
+### 4. Frontend `SystemStatus` Missing `reachable` Field
+**File:** `frontend/src/types/api.ts:84`  
+**Issue:** Backend `/api/health` now returns `gemini.reachable` (added in commit b0a5583) but frontend `SystemStatus` interface doesn't include it. Causes TypeScript error if strict.
+
+**Fix:**
+```typescript
+// frontend/src/types/api.ts
+export interface SystemStatus {
+  status: string;
+  service: string;
+  gemini: {
+    configured: boolean;
+    model: string;
+    fallback_circuit_breaker_enabled: boolean;
+    reachable: boolean;  // NEW
+  };
+  storage: {
+    mode: string;
+    project: string;
+  };
+}
+```
+
+**Verify:** `grep -A 15 "SystemStatus" frontend/src/types/api.ts`
+
+---
+
+### 5. `sla_deadline` Required But No Default Factory
+**File:** `backend/models/schemas.py:121`  
+**Issue:** `MasterIncident.sla_deadline` is required (`...`) but no default factory using `compute_sla_deadline` from state_machine. Forces callers to manually compute SLA.
+
+**Fix:**
+```python
+# backend/models/schemas.py
+from backend.models.state_machine import compute_sla_deadline
+from pydantic import model_validator
+
+class MasterIncident(BaseModel):
+    # ...
+    sla_deadline: str = Field(
+        default="",
+        description="ISO 8601 SLA deadline for municipal resolution"
+    )
+    
+    @model_validator(mode='after')
+    def set_sla_deadline(self):
+        if not self.sla_deadline:
+            self.sla_deadline = compute_sla_deadline(self.priority)
+        return self
+```
+
+**Verify:** Create MasterIncident without sla_deadline → auto-populated
+
+---
+
+### 6. `CivicCategory` Not Exported from Backend Models Package
+**File:** `backend/models/__init__.py`  
+**Issue:** `CivicCategory` enum is defined in enums.py but not exported in `__all__`, making it unavailable for imports.
+
+**Fix:**
+```python
+# backend/models/__init__.py
+from backend.models.enums import (
+    # ... existing imports
+    CivicCategory,  # ADD
+)
+
+__all__ = [
+    # ... existing exports
+    "CivicCategory",  # ADD
+]
+```
+
+**Verify:** `.venv/bin/python -c "from backend.models import CivicCategory; print(CivicCategory.ROADS_FOOTPATHS)"`
+
+---
+
+## P2 — Improve Robustness
+
+### 7. `RawCitizenInput` Not Mirrored in Frontend Types
+**File:** `backend/models/schemas.py:66`, `frontend/src/types/api.ts:65`  
+**Issue:** Backend has dedicated `RawCitizenInput` model; frontend uses inline object. Not a wire format issue (both serialize to same JSON) but reduces type safety and reusability.
+
+**Fix (Frontend - optional):**
+```typescript
+// frontend/src/types/api.ts
+export interface RawCitizenInput {
+  language_detected?: string;
+  transcription?: string;
+  photo_url?: string;
+  audio_url?: string;
+  raw_text?: string;
+}
+
+export interface CitizenReport {
+  // ...
+  raw_input: RawCitizenInput;  // was: inline object
+  // ...
+}
+```
+
+**Verify:** `grep -n "RawCitizenInput" frontend/src/types/api.ts`
+
+---
+
+## Verification Checklist for Section 2 Fixes
+
+| Check | Command | Expected |
+|-------|---------|----------|
+| Backend tests | `.venv/bin/python -m pytest tests/ -v` | 7 passed |
+| Frontend build | `cd frontend && npm run build` | Success |
+| Wire format: incident_id | `grep incident_id backend/models/schemas.py` | `incident_id:` not `id:` |
+| Wire format: monsoon_multiplier | `grep monsoon backend/models/schemas.py` | `monsoon_multiplier` |
+| CivicCategory enforced | `grep "category: CivicCategory" backend/models/schemas.py` | Match |
+| SystemStatus has reachable | `grep reachable frontend/src/types/api.ts` | Match |
+| sla_deadline has default | `grep -A 3 "sla_deadline" backend/models/schemas.py` | default_factory or validator |
+| CivicCategory exported | `.venv/bin/python -c "from backend.models import CivicCategory"` | No error |
+
+---
+
+## Notes on Section 2 Compliance
+
+| ROADMAP §2 Acceptance Criteria | Status |
+|--------------------------------|--------|
+| Pydantic models validate JSON payloads strictly (v2) | ✅ |
+| State machine enforces 6 canonical status transitions | ✅ |
+| `escalation_tier` computes LEVEL_1/2/3 without LLM calls | ✅ |
+| **Wire format matches CONTEXT.md §4 exactly** | ❌ (2 critical violations) |
+| `CivicCategory` enum used for validation | ❌ (defined but not enforced) |
+
+The Section 2 implementation is functionally complete and tested, but **must fix the 2 critical wire-format violations before Section 3** to maintain API contract integrity per Guardrail #3.

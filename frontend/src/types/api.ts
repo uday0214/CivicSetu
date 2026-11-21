@@ -31,6 +31,13 @@ export type AuditStatus =
   | 'PARTIAL_FIX'
   | 'REJECTED_MISMATCH';
 
+export type CivicCategory = 
+  | 'Roads & Footpaths'
+  | 'Sanitation & Waste'
+  | 'Water & Drainage'
+  | 'Electricity & Lighting'
+  | 'Public Safety';
+
 export interface LocationData {
   lat: number;
   lng: number;
@@ -41,7 +48,7 @@ export interface LocationData {
 export interface ExplainableTriageTrace {
   visual_hazard_factors?: string[];
   vulnerable_proximity?: string;
-  monsoon_risk_multiplier?: boolean;
+  monsoon_multiplier?: boolean;
   jurisdiction_rationale?: string;
   confidence_score?: number;
 }
@@ -57,11 +64,19 @@ export interface ResolutionAudit {
   citizen_reopen_window_expires?: string;
 }
 
+export interface RawCitizenInput {
+  language_detected?: string;
+  transcription?: string;
+  photo_url?: string;
+  audio_url?: string;
+  raw_text?: string;
+}
+
 export interface MasterIncident {
-  id: string;
+  incident_id: string;
   title: string;
   description_standardized_en: string;
-  category: string;
+  category: CivicCategory;
   priority: PriorityTier;
   agency: IndianAgency;
   ward_id: string;
@@ -81,13 +96,7 @@ export interface CitizenReport {
   report_id: string;
   master_incident_id?: string;
   citizen_contact?: string;
-  raw_input: {
-    language_detected?: string;
-    transcription?: string;
-    photo_url?: string;
-    audio_url?: string;
-    raw_text?: string;
-  };
+  raw_input: RawCitizenInput;
   location: LocationData;
   vernacular_response?: string;
   timestamp: string;
@@ -100,6 +109,7 @@ export interface SystemStatus {
     configured: boolean;
     model: string;
     fallback_circuit_breaker_enabled: boolean;
+    reachable: boolean;
   };
   storage: {
     mode: string;

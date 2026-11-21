@@ -27,7 +27,10 @@ class JSONIncidentRepository(BaseIncidentRepository):
             try:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    self.incidents = {inc["id"]: inc for inc in data.get("incidents", [])}
+                    self.incidents = {
+                        inc.get("incident_id") or inc.get("id"): inc
+                        for inc in data.get("incidents", [])
+                    }
                     self.reports = {rep["report_id"]: rep for rep in data.get("reports", [])}
                 logger.info(f"Loaded {len(self.incidents)} incidents from {self.data_file}")
             except Exception as e:
@@ -76,7 +79,9 @@ class JSONIncidentRepository(BaseIncidentRepository):
         return items[offset : offset + limit]
 
     async def create_incident(self, incident_data: Dict[str, Any]) -> Dict[str, Any]:
-        incident_id = incident_data["id"]
+        incident_id = incident_data.get("incident_id") or incident_data.get("id")
+        if not incident_id:
+            raise ValueError("Incident data must contain incident_id or id")
         self.incidents[incident_id] = incident_data
         self._save()
         return incident_data
@@ -101,7 +106,10 @@ class JSONIncidentRepository(BaseIncidentRepository):
         return reports
 
     async def reset_demo_data(self, seed_incidents: List[Dict[str, Any]]) -> None:
-        self.incidents = {inc["id"]: inc for inc in seed_incidents}
+        self.incidents = {
+            inc.get("incident_id") or inc.get("id"): inc
+            for inc in seed_incidents
+        }
         self.reports = {}
         self._save()
         logger.info(f"Reset repository to {len(self.incidents)} seed incidents")
