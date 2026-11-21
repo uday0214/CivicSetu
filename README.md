@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://civicsetu-yt0q.onrender.com/" target="_blank" rel="noopener noreferrer">
+    <img src="assets/logo.png" alt="CivicSetu — AI-Powered Civic Issue Resolution" width="500" />
+  </a>
+</p>
+
 # CivicSetu — AI-Powered Civic Issue Resolution for Indian Cities
 *Built for PromptWars (CivicResolve Challenge).*
 
