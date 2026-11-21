@@ -214,22 +214,23 @@ This roadmap is modularized into sequentially numbered sections (`Section 1`, `S
 
 ---
 
-## 8. Realistic Indian City Seed Dataset & Demo Simulation
+## 8. Realistic Indian City Seed Dataset & Demo Simulation [COMPLETED]
 *Goal: Provide a rich, pre-loaded dataset from a representative Indian city to showcase live deduplication, heatmaps, and multilingual intake during pitch demos.*
 
-- **8.1. Target City & Ward Definition**
-  - Target: **Bengaluru (BBMP)** or **Hyderabad (GHMC)** with 3 real wards (e.g., Indiranagar, Koramangala, Whitefield).
-- **8.2. Seed Incidents (15–20 Diverse Real-World Cases)**
-  - **Cluster 1 (Monsoon Hazard - Severely Overdue P0):** Open manhole submerged in waterlogged road, overdue by 26 hours $\rightarrow$ Triggers **`LEVEL_3_MUNICIPAL_COMMISSIONER`** badge prominently.
-  - **Cluster 2 (Dangling High-Tension Wire - P0):** BESCOM electrical hazard near school gate within SLA $\rightarrow$ `LEVEL_1_WARD_JE`.
-  - **Cluster 3 (Garbage Overflow - P2):** Commercial market waste dump on footpath with 4 merged citizen reports.
-  - **Cluster 4 (Pothole Corridor - P1):** Main arterial road with multiple complaints.
-  - **Cluster 5 (Resolved with Audit - Complete Case):** Before/after photo pair showing verified asphalt repair with 96% AI confidence.
-  - **Cluster 6 (Rejected Audit Demo Case):** In-progress ticket where contractor submitted an unrelated photo, flagged as `REJECTED_MISMATCH`.
-- **8.3. Multilingual Audio/Text Fixtures**
-  - Sample voice/text inputs in Hindi, Kannada/Telugu, and Hinglish for instant demo testing.
+- [x] **8.1. Target City & Ward Definition**
+  - Target: **Bengaluru (BBMP)** with 3 real wards: Indiranagar (Ward 14), Koramangala (Ward 84), Bellandur (Ward 150).
+- [x] **8.2. Seed Incidents (15–20 Diverse Real-World Cases)**
+  - **Cluster 1 (Monsoon Hazard - Severely Overdue P0):** Open manhole submerged in waterlogged road, overdue by 26 hours $\rightarrow$ Triggers **`LEVEL_3_MUNICIPAL_COMMISSIONER`** badge prominently (`CS-BLR-1042`).
+  - **Cluster 2 (Dangling High-Tension Wire - P0):** BESCOM electrical hazard near school gate within SLA $\rightarrow$ `LEVEL_1_WARD_JE` (`CS-BLR-2019`).
+  - **Cluster 3 (Garbage Overflow - P2):** Commercial market waste dump on footpath with 4 merged citizen reports (`CS-BLR-3004`).
+  - **Cluster 4 (Pothole Corridor - P1):** Main arterial road with multiple complaints (`CS-BLR-4011`).
+  - **Cluster 5 (Resolved with Audit - Complete Case):** Before/after photo pair showing verified asphalt repair with 96% AI confidence (`CS-BLR-5022`).
+  - **Cluster 6 (Rejected Audit Demo Case):** In-progress ticket where contractor submitted an unrelated photo, flagged as `REJECTED_MISMATCH` (`CS-BLR-6033`).
+  - Plus 10 additional cases across Indiranagar, Koramangala, and Bellandur representing all 5 agencies and categories.
+- [x] **8.3. Multilingual Audio/Text Fixtures**
+  - Sample voice/text inputs in Hindi, Kannada, Hinglish, and English via `GET /api/seed/fixtures`.
 - **Acceptance Criteria for Section 8:**
-  - One-click seed script (`python -m backend.seed` or UI "Reset Demo Data" button) instantly populates the map and metrics, including the overdue Level 3 Commissioner ticket.
+  - One-click seed script (`python -m backend.seed` or UI "Reset Demo Data" button) instantly populates the map and metrics, including the overdue Level 3 Commissioner ticket. (Verified & Tested)
 
 ---
 

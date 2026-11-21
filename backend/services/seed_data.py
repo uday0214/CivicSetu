@@ -1,0 +1,587 @@
+"""
+CivicSetu Realistic Indian City Seed Dataset & Reset Service.
+Target City: Bengaluru (BBMP) across Indiranagar (Ward 14), Koramangala (Ward 84), and Bellandur (Ward 150).
+"""
+
+from datetime import datetime, timezone, timedelta
+from typing import List, Dict, Any
+
+from backend.models.enums import (
+    CivicCategory,
+    PriorityTier,
+    IndianAgency,
+    IncidentStatus,
+    EscalationTier,
+    AuditStatus,
+)
+from backend.storage.json_store import get_repository
+
+
+def generate_seed_incidents() -> List[Dict[str, Any]]:
+    """
+    Generates 16 rich, realistic civic incidents across Bengaluru BBMP.
+    Includes all 6 required demo clusters:
+      - Cluster 1: Overdue P0 submerged manhole (Level 3 Municipal Commissioner).
+      - Cluster 2: Dangling high-tension live wire near school gate within SLA.
+      - Cluster 3: Commercial market solid waste dump with 4 merged citizen reports.
+      - Cluster 4: Arterial road crater corridor with multiple reports.
+      - Cluster 5: Complete resolved case with verified Before/After photo audit (96% confidence).
+      - Cluster 6: In-progress ticket with rejected audit (unrelated indoor photo).
+    """
+    now = datetime.now(timezone.utc)
+
+    incidents: List[Dict[str, Any]] = [
+        # Cluster 1: Monsoon Hazard - Severely Overdue P0 (Escalated to Level 3 Municipal Commissioner)
+        {
+            "incident_id": "CS-BLR-1042",
+            "title": "Submerged Open Manhole on 100 Feet Road",
+            "description_standardized_en": "Open sewer manhole completely hidden under 6 inches of waterlogged monsoon runoff. High risk of fatal falls for two-wheelers and pedestrians.",
+            "category": CivicCategory.WATER_DRAINAGE.value,
+            "priority": PriorityTier.P0_CRITICAL.value,
+            "agency": IndianAgency.WATER_SEWERAGE_BOARD.value,
+            "ward_id": "Ward 14 - Indiranagar",
+            "location": {
+                "lat": 12.9716,
+                "lng": 77.6412,
+                "landmark": "Opposite Indiranagar Metro Pillar 42",
+                "formatted_address": "100 Feet Road, Indiranagar, Bengaluru, Karnataka 560038",
+            },
+            "status": IncidentStatus.REPORTED.value,
+            "community_impact_score": 3,
+            "citizen_report_ids": ["CR-BLR-001", "CR-BLR-002", "CR-BLR-003"],
+            "created_at": (now - timedelta(hours=30)).isoformat(),
+            "updated_at": (now - timedelta(hours=2)).isoformat(),
+            "sla_deadline": (now - timedelta(hours=26)).isoformat(),  # 26h overdue!
+            "escalation_tier": EscalationTier.LEVEL_3_MUNICIPAL_COMMISSIONER.value,
+            "triage_trace": {
+                "visual_hazard_factors": [
+                    "Submerged open sewer manhole cavity",
+                    "Waterlogging obscuring drop depth > 2 meters",
+                    "High-volume arterial traffic flow",
+                ],
+                "vulnerable_proximity": "Indiranagar Metro Station entrance within 30 meters",
+                "monsoon_multiplier": True,
+                "jurisdiction_rationale": "Underground trunk sewer line maintenance lies strictly with BWSSB. Water saturation requires pump deployment.",
+                "confidence_score": 0.98,
+            },
+            "resolution_audit": None,
+        },
+        # Cluster 2: Dangling High-Tension Wire - P0 (Within SLA -> Level 1 Ward JE)
+        {
+            "incident_id": "CS-BLR-2019",
+            "title": "Dangling Snapped 11kV Wire Near School Entrance",
+            "description_standardized_en": "Snapped overhead 11kV electrical wire hanging 4 feet above sidewalk directly outside primary school gate. Sparking observed during light drizzle.",
+            "category": CivicCategory.ELECTRICITY_LIGHTING.value,
+            "priority": PriorityTier.P0_CRITICAL.value,
+            "agency": IndianAgency.DISCOM_ELECTRICAL.value,
+            "ward_id": "Ward 14 - Indiranagar",
+            "location": {
+                "lat": 12.9725,
+                "lng": 77.6430,
+                "landmark": "Government Primary School Gate, 12th Main",
+                "formatted_address": "12th Main Road, Indiranagar, Bengaluru, Karnataka 560008",
+            },
+            "status": IncidentStatus.TRIAGED.value,
+            "community_impact_score": 2,
+            "citizen_report_ids": ["CR-BLR-010", "CR-BLR-011"],
+            "created_at": (now - timedelta(hours=1)).isoformat(),
+            "updated_at": (now - timedelta(minutes=45)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=3)).isoformat(),  # Within 4h SLA
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": [
+                    "Exposed 11kV electrical conductor hanging at pedestrian chest height",
+                    "Active sparking under wet road conditions",
+                ],
+                "vulnerable_proximity": "Primary school entrance gate within 5 meters",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "High-voltage distribution lines belong to BESCOM. Immediate feeder line isolation and grounding required.",
+                "confidence_score": 0.99,
+            },
+            "resolution_audit": None,
+        },
+        # Cluster 3: Garbage Overflow - P2 (4 Merged Citizen Reports)
+        {
+            "incident_id": "CS-BLR-3004",
+            "title": "Commercial Market Solid Waste Dump Encroachment",
+            "description_standardized_en": "Massive unsegregated commercial garbage pile overflowing onto 80ft road pedestrian sidewalk, generating foul odor and blocking stormwater drains.",
+            "category": CivicCategory.SANITATION_WASTE.value,
+            "priority": PriorityTier.P2_MEDIUM.value,
+            "agency": IndianAgency.ULB_MUNICIPAL.value,
+            "ward_id": "Ward 84 - Koramangala",
+            "location": {
+                "lat": 12.9352,
+                "lng": 77.6245,
+                "landmark": "Near Koramangala BDA Complex Footpath",
+                "formatted_address": "80 Feet Road, 6th Block Koramangala, Bengaluru, Karnataka 560095",
+            },
+            "status": IncidentStatus.TRIAGED.value,
+            "community_impact_score": 4,  # 4 citizens upvoted / reported
+            "citizen_report_ids": ["CR-BLR-021", "CR-BLR-022", "CR-BLR-023", "CR-BLR-024"],
+            "created_at": (now - timedelta(hours=18)).isoformat(),
+            "updated_at": (now - timedelta(hours=3)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=30)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": [
+                    "Footpath completely obstructed by organic and plastic waste",
+                    "Drain inlet covered causing localized puddle",
+                ],
+                "vulnerable_proximity": "Commercial retail and dining cluster",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "Municipal solid waste management under BBMP SWM Division. Requires compactor truck and sanitary inspectors.",
+                "confidence_score": 0.94,
+            },
+            "resolution_audit": None,
+        },
+        # Cluster 4: Pothole Corridor - P1 (Multiple complaints along 100ft road)
+        {
+            "incident_id": "CS-BLR-4011",
+            "title": "Arterial Road Cavitation & Pothole Corridor",
+            "description_standardized_en": "Series of 4 deep craters along the right lane of 100 Feet Road causing vehicle axle damage and emergency swerving.",
+            "category": CivicCategory.ROADS_FOOTPATHS.value,
+            "priority": PriorityTier.P1_HIGH.value,
+            "agency": IndianAgency.ULB_MUNICIPAL.value,
+            "ward_id": "Ward 14 - Indiranagar",
+            "location": {
+                "lat": 12.9719,
+                "lng": 77.6418,
+                "landmark": "Between Sony Center and CMH Road Junction",
+                "formatted_address": "100 Feet Road, Indiranagar, Bengaluru, Karnataka 560038",
+            },
+            "status": IncidentStatus.IN_PROGRESS.value,
+            "community_impact_score": 3,
+            "citizen_report_ids": ["CR-BLR-031", "CR-BLR-032", "CR-BLR-033"],
+            "created_at": (now - timedelta(hours=14)).isoformat(),
+            "updated_at": (now - timedelta(hours=4)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=10)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": [
+                    "Sub-base cavitation deeper than 10cm",
+                    "Heavy arterial vehicular traffic load",
+                ],
+                "vulnerable_proximity": "Main commercial boulevard",
+                "monsoon_multiplier": True,
+                "jurisdiction_rationale": "Major arterial road under BBMP Major Roads Division. Cold-mix asphalt patch required.",
+                "confidence_score": 0.95,
+            },
+            "resolution_audit": None,
+        },
+        # Cluster 5: Resolved Case with Verified Audit (Complete Before/After proof)
+        {
+            "incident_id": "CS-BLR-5022",
+            "title": "Pothole Repaired & Bitumen Re-laid",
+            "description_standardized_en": "Severe asphalt depression filled and compacted with bituminous hot mix. Road restored to smooth riding quality.",
+            "category": CivicCategory.ROADS_FOOTPATHS.value,
+            "priority": PriorityTier.P1_HIGH.value,
+            "agency": IndianAgency.ULB_MUNICIPAL.value,
+            "ward_id": "Ward 14 - Indiranagar",
+            "location": {
+                "lat": 12.9750,
+                "lng": 77.6390,
+                "landmark": "Near CMH Hospital Cross",
+                "formatted_address": "CMH Road, Indiranagar, Bengaluru, Karnataka 560038",
+            },
+            "status": IncidentStatus.RESOLVED.value,
+            "community_impact_score": 2,
+            "citizen_report_ids": ["CR-BLR-041", "CR-BLR-042"],
+            "created_at": (now - timedelta(hours=28)).isoformat(),
+            "updated_at": (now - timedelta(hours=6)).isoformat(),
+            "sla_deadline": (now - timedelta(hours=4)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["Road surface cracking and depression"],
+                "vulnerable_proximity": "Near CMH Hospital emergency entrance",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "BBMP Road Infrastructure. Priority repair executed.",
+                "confidence_score": 0.96,
+            },
+            "resolution_audit": {
+                "before_photo_url": "/seed/pothole_waterlogged.jpg",
+                "after_photo_url": "/seed/pothole_repaired.jpg",
+                "contractor_id": "CONTRACTOR-BBMP-94",
+                "submitted_at": (now - timedelta(hours=6)).isoformat(),
+                "audit_status": AuditStatus.VERIFIED_FIXED.value,
+                "audit_confidence": 0.96,
+                "evidence_notes": "Site landmark matches CMH Road building facade. Fresh asphalt patch is flush with road surface, hot mix properly compacted, no loose gravel or standing water remaining.",
+                "citizen_reopen_window_expires": (now + timedelta(hours=42)).isoformat(),
+            },
+        },
+        # Cluster 6: Rejected Audit Demo Case (Unrelated photo submitted by contractor)
+        {
+            "incident_id": "CS-BLR-6033",
+            "title": "Collapsed Stormwater Drain Slab",
+            "description_standardized_en": "Concrete slab covering roadside stormwater drain collapsed, leaving a 4-foot chasm on the walkway.",
+            "category": CivicCategory.WATER_DRAINAGE.value,
+            "priority": PriorityTier.P1_HIGH.value,
+            "agency": IndianAgency.ULB_MUNICIPAL.value,
+            "ward_id": "Ward 150 - Bellandur",
+            "location": {
+                "lat": 12.9260,
+                "lng": 77.6762,
+                "landmark": "Green Glen Layout Main Drain",
+                "formatted_address": "Green Glen Layout, Bellandur, Bengaluru, Karnataka 560103",
+            },
+            "status": IncidentStatus.IN_PROGRESS.value,
+            "community_impact_score": 2,
+            "citizen_report_ids": ["CR-BLR-051"],
+            "created_at": (now - timedelta(hours=20)).isoformat(),
+            "updated_at": (now - timedelta(hours=2)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=4)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["Collapsed concrete cover slab", "Pedestrian walkway hazard"],
+                "vulnerable_proximity": "Residential high-rise walkway corridor",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "SWD maintenance under BBMP Storm Water Drains department.",
+                "confidence_score": 0.93,
+            },
+            "resolution_audit": {
+                "before_photo_url": "/seed/broken_culvert.jpg",
+                "after_photo_url": "/seed/unrelated_indoor.jpg",
+                "contractor_id": "CONTRACTOR-REPAIR-07",
+                "submitted_at": (now - timedelta(hours=2)).isoformat(),
+                "audit_status": AuditStatus.REJECTED_MISMATCH.value,
+                "audit_confidence": 0.95,
+                "evidence_notes": "Submitted after-photo depicts an interior office floor with ceramic tiles. Does not match outdoor roadside drainage culvert site geometry. Contractor closure rejected.",
+                "citizen_reopen_window_expires": None,
+            },
+        },
+        # Case 7: Water Pipe Burst in Koramangala
+        {
+            "incident_id": "CS-BLR-7001",
+            "title": "BWSSB Underground Water Pipeline Burst",
+            "description_standardized_en": "High pressure potable water main burst flooding sidewalk and front gates on 4th Cross.",
+            "category": CivicCategory.WATER_DRAINAGE.value,
+            "priority": PriorityTier.P1_HIGH.value,
+            "agency": IndianAgency.WATER_SEWERAGE_BOARD.value,
+            "ward_id": "Ward 84 - Koramangala",
+            "location": {
+                "lat": 12.9340,
+                "lng": 77.6210,
+                "landmark": "Koramangala 4th Block Park",
+                "formatted_address": "4th Cross, Koramangala 4th Block, Bengaluru",
+            },
+            "status": IncidentStatus.IN_PROGRESS.value,
+            "community_impact_score": 2,
+            "citizen_report_ids": ["CR-BLR-061"],
+            "created_at": (now - timedelta(hours=8)).isoformat(),
+            "updated_at": (now - timedelta(hours=1)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=16)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["High volume clean water gushing from underground"],
+                "vulnerable_proximity": "Residential gates",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "BWSSB water supply division.",
+                "confidence_score": 0.97,
+            },
+            "resolution_audit": None,
+        },
+        # Case 8: Streetlight Cluster Blackout along Bellandur Lake Road
+        {
+            "incident_id": "CS-BLR-7002",
+            "title": "Streetlight Blackout Corridor Along Lake Road",
+            "description_standardized_en": "8 consecutive sodium streetlamps non-functional creating 400m dark stretch near lake perimeter.",
+            "category": CivicCategory.ELECTRICITY_LIGHTING.value,
+            "priority": PriorityTier.P2_MEDIUM.value,
+            "agency": IndianAgency.DISCOM_ELECTRICAL.value,
+            "ward_id": "Ward 150 - Bellandur",
+            "location": {
+                "lat": 12.9310,
+                "lng": 77.6710,
+                "landmark": "Bellandur Lake Viewpoint Road",
+                "formatted_address": "Lake Road, Bellandur, Bengaluru",
+            },
+            "status": IncidentStatus.REPORTED.value,
+            "community_impact_score": 3,
+            "citizen_report_ids": ["CR-BLR-071", "CR-BLR-072"],
+            "created_at": (now - timedelta(hours=16)).isoformat(),
+            "updated_at": (now - timedelta(hours=16)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=32)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["Pedestrian dark stretch along unmonitored lake"],
+                "vulnerable_proximity": "Lake bund walkway",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "BESCOM streetlight feeder cable fault.",
+                "confidence_score": 0.91,
+            },
+            "resolution_audit": None,
+        },
+        # Case 9: C&D Debris Dump in Bellandur
+        {
+            "incident_id": "CS-BLR-7003",
+            "title": "Construction & Demolition Debris Illegally Dumped",
+            "description_standardized_en": "Truckload of concrete blocks and plaster debris dumped on vacant plot next to pedestrian lane.",
+            "category": CivicCategory.SANITATION_WASTE.value,
+            "priority": PriorityTier.P2_MEDIUM.value,
+            "agency": IndianAgency.ULB_MUNICIPAL.value,
+            "ward_id": "Ward 150 - Bellandur",
+            "location": {
+                "lat": 12.9285,
+                "lng": 77.6735,
+                "landmark": "Near EcoSpace Tech Park Back Gate",
+                "formatted_address": "Outer Ring Road, Bellandur, Bengaluru",
+            },
+            "status": IncidentStatus.TRIAGED.value,
+            "community_impact_score": 1,
+            "citizen_report_ids": ["CR-BLR-081"],
+            "created_at": (now - timedelta(hours=10)).isoformat(),
+            "updated_at": (now - timedelta(hours=5)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=38)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["C&D waste spilling onto lane"],
+                "vulnerable_proximity": "Tech park pedestrian connector",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "BBMP SWM Enforcement.",
+                "confidence_score": 0.92,
+            },
+            "resolution_audit": None,
+        },
+        # Case 10: NHAI Elevated Flyover Expansion Joint Gap
+        {
+            "incident_id": "CS-BLR-7004",
+            "title": "Flyover Bridge Expansion Joint Steel Plate Displaced",
+            "description_standardized_en": "Metal tooth joint plate on elevated highway bridge loose and sticking up 2 inches, damaging vehicle tires at high speed.",
+            "category": CivicCategory.PUBLIC_SAFETY.value,
+            "priority": PriorityTier.P0_CRITICAL.value,
+            "agency": IndianAgency.NHAI.value,
+            "ward_id": "Ward 84 - Koramangala",
+            "location": {
+                "lat": 12.9380,
+                "lng": 77.6190,
+                "landmark": "Madiwala Flyover Northbound Ramp",
+                "formatted_address": "Hosur Road NH-44, Bengaluru",
+            },
+            "status": IncidentStatus.IN_PROGRESS.value,
+            "community_impact_score": 3,
+            "citizen_report_ids": ["CR-BLR-091", "CR-BLR-092"],
+            "created_at": (now - timedelta(hours=2)).isoformat(),
+            "updated_at": (now - timedelta(hours=1)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=2)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["High speed impact hazard on elevated corridor"],
+                "vulnerable_proximity": "National Highway arterial lane",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "NHAI corridor jurisdiction.",
+                "confidence_score": 0.99,
+            },
+            "resolution_audit": None,
+        },
+        # Case 11: Broken Footpath Slab in Indiranagar 12th Main
+        {
+            "incident_id": "CS-BLR-7005",
+            "title": "Broken Footpath Tile with Exposed Steel Reinforcement",
+            "description_standardized_en": "Paver slab shattered exposing rusted iron mesh, causing tripping hazard for morning walkers.",
+            "category": CivicCategory.ROADS_FOOTPATHS.value,
+            "priority": PriorityTier.P3_LOW.value,
+            "agency": IndianAgency.ULB_MUNICIPAL.value,
+            "ward_id": "Ward 14 - Indiranagar",
+            "location": {
+                "lat": 12.9735,
+                "lng": 77.6405,
+                "landmark": "Near Defence Colony Corner",
+                "formatted_address": "12th Main Road, Indiranagar, Bengaluru",
+            },
+            "status": IncidentStatus.REPORTED.value,
+            "community_impact_score": 1,
+            "citizen_report_ids": ["CR-BLR-101"],
+            "created_at": (now - timedelta(hours=5)).isoformat(),
+            "updated_at": (now - timedelta(hours=5)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=67)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["Exposed iron rebar"],
+                "vulnerable_proximity": "Residential walkway",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "BBMP Ward Civil Works.",
+                "confidence_score": 0.89,
+            },
+            "resolution_audit": None,
+        },
+        # Case 12: High-Voltage Transformer Oil Leakage
+        {
+            "incident_id": "CS-BLR-7006",
+            "title": "Transformer Mineral Oil Leakage Pool",
+            "description_standardized_en": "Pole-mounted 250kVA transformer actively dripping insulating oil onto footpath, creating slip hazard and overheating risk.",
+            "category": CivicCategory.ELECTRICITY_LIGHTING.value,
+            "priority": PriorityTier.P1_HIGH.value,
+            "agency": IndianAgency.DISCOM_ELECTRICAL.value,
+            "ward_id": "Ward 84 - Koramangala",
+            "location": {
+                "lat": 12.9360,
+                "lng": 77.6270,
+                "landmark": "Opposite Koramangala Club",
+                "formatted_address": "1st Main Road, Koramangala 6th Block, Bengaluru",
+            },
+            "status": IncidentStatus.TRIAGED.value,
+            "community_impact_score": 2,
+            "citizen_report_ids": ["CR-BLR-111"],
+            "created_at": (now - timedelta(hours=7)).isoformat(),
+            "updated_at": (now - timedelta(hours=2)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=17)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["Flammable transformer oil pool on concrete"],
+                "vulnerable_proximity": "Pedestrian sidewalk",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "BESCOM O&M Substation Division.",
+                "confidence_score": 0.94,
+            },
+            "resolution_audit": None,
+        },
+        # Case 13: Overflowing Sewage Manhole in Koramangala
+        {
+            "incident_id": "CS-BLR-7007",
+            "title": "Domestic Sewage Sump Backflow into Street",
+            "description_standardized_en": "Choked sanitary trunk line causing raw sewage upwelling onto road surface near residential lane.",
+            "category": CivicCategory.WATER_DRAINAGE.value,
+            "priority": PriorityTier.P1_HIGH.value,
+            "agency": IndianAgency.WATER_SEWERAGE_BOARD.value,
+            "ward_id": "Ward 84 - Koramangala",
+            "location": {
+                "lat": 12.9330,
+                "lng": 77.6230,
+                "landmark": "Near Bethany High School Road",
+                "formatted_address": "Koramangala 8th Block, Bengaluru",
+            },
+            "status": IncidentStatus.IN_PROGRESS.value,
+            "community_impact_score": 3,
+            "citizen_report_ids": ["CR-BLR-121", "CR-BLR-122"],
+            "created_at": (now - timedelta(hours=9)).isoformat(),
+            "updated_at": (now - timedelta(hours=3)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=15)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["Biohazard raw sewage overflow on roadway"],
+                "vulnerable_proximity": "School route",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "BWSSB sanitation jetting team required.",
+                "confidence_score": 0.96,
+            },
+            "resolution_audit": None,
+        },
+        # Case 14: Missing Storm Drain Grate on Bellandur ORR
+        {
+            "incident_id": "CS-BLR-7008",
+            "title": "Missing Cast-Iron Storm Drain Grate",
+            "description_standardized_en": "Cast iron drain grating stolen or dislodged along busy cycle/bus lane on Outer Ring Road.",
+            "category": CivicCategory.PUBLIC_SAFETY.value,
+            "priority": PriorityTier.P1_HIGH.value,
+            "agency": IndianAgency.STATE_PWD.value,
+            "ward_id": "Ward 150 - Bellandur",
+            "location": {
+                "lat": 12.9290,
+                "lng": 77.6780,
+                "landmark": "Devarabisanahalli Flyover Approach",
+                "formatted_address": "Outer Ring Road, Bellandur, Bengaluru",
+            },
+            "status": IncidentStatus.REPORTED.value,
+            "community_impact_score": 2,
+            "citizen_report_ids": ["CR-BLR-131"],
+            "created_at": (now - timedelta(hours=4)).isoformat(),
+            "updated_at": (now - timedelta(hours=4)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=20)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["Uncovered drainage trench in cyclist lane"],
+                "vulnerable_proximity": "Arterial tech corridor",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "State PWD / BBMP ORR Division.",
+                "confidence_score": 0.95,
+            },
+            "resolution_audit": None,
+        },
+        # Case 15: Uprooted Tree Blocking Carriageway - Resolved with Audit
+        {
+            "incident_id": "CS-BLR-7009",
+            "title": "Fallen Gulmohar Tree Cleared from Road",
+            "description_standardized_en": "Large Gulmohar branch snapped across 100ft road cleared and timber hauled away by emergency forestry squad.",
+            "category": CivicCategory.PUBLIC_SAFETY.value,
+            "priority": PriorityTier.P1_HIGH.value,
+            "agency": IndianAgency.ULB_MUNICIPAL.value,
+            "ward_id": "Ward 14 - Indiranagar",
+            "location": {
+                "lat": 12.9740,
+                "lng": 77.6425,
+                "landmark": "Near Domlur Flyover Loop",
+                "formatted_address": "100 Feet Road, Indiranagar, Bengaluru",
+            },
+            "status": IncidentStatus.RESOLVED.value,
+            "community_impact_score": 2,
+            "citizen_report_ids": ["CR-BLR-141"],
+            "created_at": (now - timedelta(hours=22)).isoformat(),
+            "updated_at": (now - timedelta(hours=8)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=2)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["Carriageway fully blocked"],
+                "vulnerable_proximity": "Flyover feeder",
+                "monsoon_multiplier": True,
+                "jurisdiction_rationale": "BBMP Forest Cell.",
+                "confidence_score": 0.97,
+            },
+            "resolution_audit": {
+                "before_photo_url": "/seed/dangling_wire_school.jpg",
+                "after_photo_url": "/seed/pothole_repaired.jpg",
+                "contractor_id": "CONTRACTOR-FOREST-02",
+                "submitted_at": (now - timedelta(hours=8)).isoformat(),
+                "audit_status": AuditStatus.VERIFIED_FIXED.value,
+                "audit_confidence": 0.92,
+                "evidence_notes": "Obstruction completely cleared, tree limbs cut and hauled away, roadway opened to normal vehicular flow.",
+                "citizen_reopen_window_expires": (now + timedelta(hours=40)).isoformat(),
+            },
+        },
+        # Case 16: PWD Arterial Road Crater Near Bellandur Junction
+        {
+            "incident_id": "CS-BLR-7010",
+            "title": "Deep PWD Highway Crater Near Sarjapur Junction",
+            "description_standardized_en": "2-meter wide asphalt crater on state highway corridor causing vehicle slow down and dust plume.",
+            "category": CivicCategory.ROADS_FOOTPATHS.value,
+            "priority": PriorityTier.P1_HIGH.value,
+            "agency": IndianAgency.STATE_PWD.value,
+            "ward_id": "Ward 150 - Bellandur",
+            "location": {
+                "lat": 12.9240,
+                "lng": 77.6740,
+                "landmark": "Sarjapur Road - ORR Junction",
+                "formatted_address": "Sarjapur Main Road, Bellandur, Bengaluru",
+            },
+            "status": IncidentStatus.TRIAGED.value,
+            "community_impact_score": 2,
+            "citizen_report_ids": ["CR-BLR-151"],
+            "created_at": (now - timedelta(hours=6)).isoformat(),
+            "updated_at": (now - timedelta(hours=2)).isoformat(),
+            "sla_deadline": (now + timedelta(hours=18)).isoformat(),
+            "escalation_tier": EscalationTier.LEVEL_1_WARD_JE.value,
+            "triage_trace": {
+                "visual_hazard_factors": ["High vehicular volume arterial crater"],
+                "vulnerable_proximity": "Major junction signal",
+                "monsoon_multiplier": False,
+                "jurisdiction_rationale": "Karnataka State PWD highway maintenance division.",
+                "confidence_score": 0.93,
+            },
+            "resolution_audit": None,
+        },
+    ]
+
+    return incidents
+
+
+async def seed_database() -> Dict[str, Any]:
+    """
+    Clears and populates the database with realistic Bengaluru demo dataset.
+    """
+    repo = get_repository()
+    incidents = generate_seed_incidents()
+    await repo.reset_demo_data(incidents)
+
+    return {
+        "success": True,
+        "message": f"Successfully loaded {len(incidents)} Bengaluru BBMP incidents across Indiranagar, Koramangala, and Bellandur.",
+        "incident_count": len(incidents),
+    }

@@ -11,6 +11,7 @@ from backend.routes.health import router as health_router
 from backend.routes.intake import router as intake_router
 from backend.routes.incidents import router as incidents_router
 from backend.routes.analytics import router as analytics_router
+from backend.routes.seed import router as seed_router
 
 app = FastAPI(
     title="CivicSetu API",
@@ -32,11 +33,17 @@ app.include_router(health_router)
 app.include_router(intake_router)
 app.include_router(incidents_router)
 app.include_router(analytics_router)
+app.include_router(seed_router)
 
 # Mount local uploads directory if it exists
 upload_dir = os.path.abspath("backend/uploads")
 os.makedirs(upload_dir, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=upload_dir), name="uploads")
+
+# Mount seed directory if it exists
+seed_dir = os.path.abspath("frontend/public/seed")
+if os.path.exists(seed_dir):
+    app.mount("/seed", StaticFiles(directory=seed_dir), name="seed")
 
 # Frontend static serving and SPA catch-all (strictly excluding /api/*, /uploads/*, /seed/*)
 frontend_dist = os.path.abspath("frontend/dist")
