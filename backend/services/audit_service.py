@@ -1,8 +1,10 @@
 """CivicSetu Closed-Loop AI Verification & Resolution Audit Service."""
 
+import io
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from PIL import Image
 from google.genai import types
 
 from backend.config import settings
@@ -43,6 +45,14 @@ Forensic Audit Protocol:
 4. Evidence Notes:
    - Provide concrete, objective visual details justifying your verdict. Mention matched landmarks or specific discrepancies.
 """
+
+
+def create_placeholder_before_image() -> bytes:
+    """Generate a synthetic red placeholder image so Before and After photos are visibly distinct in fallback mode."""
+    buf = io.BytesIO()
+    img = Image.new("RGB", (200, 200), color="red")
+    img.save(buf, format="JPEG")
+    return buf.getvalue()
 
 
 def get_default_demo_audit_fallback(
@@ -177,8 +187,11 @@ async def process_resolution_submission(
         logger.warning(f"Could not read before photo {before_photo_url}: {e}")
 
     if not before_bytes:
-        # Fallback dummy bytes for test/demo environments
-        before_bytes = after_photo_bytes
+        if settings.DEMO_FALLBACK_ON_QUOTA:
+            logger.info(f"Original before photo missing for incident {incident_id}; generating synthetic placeholder image")
+            before_bytes = create_placeholder_before_image()
+        else:
+            raise RuntimeError(f"Cannot locate original before photo for incident {incident_id}")
 
     # Run AI Verification Audit
     audit_verdict = await audit_resolution_photos(

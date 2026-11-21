@@ -74,6 +74,15 @@ class ResolutionAudit(BaseModel):
         description="ISO 8601 timestamp 48 hours post-resolution allowing citizen reopen"
     )
 
+    @model_validator(mode="after")
+    def validate_resolved_fields(self):
+        if self.audit_status == AuditStatus.VERIFIED_FIXED:
+            if not self.citizen_reopen_window_expires:
+                raise ValueError("citizen_reopen_window_expires is required when audit_status is VERIFIED_FIXED")
+            if self.audit_confidence < 0.8:
+                raise ValueError("audit_confidence must be >= 0.8 for VERIFIED_FIXED")
+        return self
+
 
 class RawCitizenInput(BaseModel):
     language_detected: Optional[str] = Field(None, description="Detected citizen input language, e.g. hi-Latn (Hinglish)")

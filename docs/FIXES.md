@@ -879,3 +879,371 @@ class ReportSubmissionRequest(BaseModel):
 - `DedupCheckRequest` includes `text` input.
 - `IntakeSubmissionResult` echoes raw input fields (`text`, `lat`, `lng`, `landmark`).
 - All 26 backend unit & integration tests pass cleanly; frontend Vite builds with 0 errors.
+
+---
+
+# CivicSetu — Section 5 & 6 Stress Test Fixes
+
+**Audit Target:** Commit `3a30f6c` (Section 5: Closed-Loop AI Verification & Resolution Audit Engine) & Commit `9420510` (Section 6: Citizen Experience Portal with Snap & Speak, Duplicate Modal, and Tracking)  
+**Date:** 2026-11-21  
+**Status:** All 26 tests pass; 14 wire-format, architectural, and UX issues found against CONTEXT.md §5-6, FRONTEND.md §3, and INTEGRATIONS.md
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| **Critical (wire contract / data integrity)** | **4** |
+| **P1 — Fix before Section 7** | **5** |
+| **P2 — Improve robustness** | **3** |
+| P3 — Nice to have | 2 |
+
+---
+
+## Critical — Wire Format & Data Integrity Violations
+
+### 1. Section 6: `SnapSpeakForm.tsx` Uses Deprecated Wire Field Names
+**File:** `frontend/src/components/citizen/SnapSpeakForm.tsx` (multiple lines)  
+**Issue:** The citizen intake form uses `extracted_landmark` and `language_detected` from `triageData` instead of canonical `landmark_clues` and `detected_language`. This was fixed in commit `73ce905` for models but the frontend component still reads the old aliases.
+
+**Evidence:**
+```typescript
+// Line 205 in SnapSpeakForm.tsx
+if (result.triage.extracted_landmark && !landmark) { ... }
+
+// Line 234: triageData?.language_detected
+// Line 235: triageData?.transcription
+```
+
+**Fix:**
+```typescript
+// Use canonical field names with fallback to aliases
+const extractedLandmark = result.triage.landmark_clues || result.triage.extracted_landmark;
+if (extractedLandmark && !landmark) { ... }
+
+// For detected language
+const detectedLang = triageData?.detected_language || triageData?.language_detected;
+const transcription = triageData?.transcription; // Internal use only
+```
+
+**Verify:** `grep -n "extracted_landmark\|language_detected" frontend/src/components/citizen/SnapSpeakForm.tsx`
+
+---
+
+### 2. Section 5: `read_bytes` Fallback Uses `after_photo_bytes` as `before_bytes`
+**File:** `backend/services/audit_service.py:215`  
+**Issue:** When the "Before" photo cannot be read from storage, the code falls back to using the "After" photo bytes for both images. This defeats the audit purpose — Gemini compares the same image against itself, always returning `VERIFIED_FIXED`.
+
+```python
+# Lines 214-215 in audit_service.py
+if not before_bytes:
+    # Fallback dummy bytes for test/demo environments
+    before_bytes = after_photo_bytes  # BUG: Same image compared to itself
+```
+
+**Fix:**
+```python
+# backend/services/audit_service.py
+if not before_bytes:
+    # Use a clearly distinguishable placeholder or raise an error
+    # For demo mode: generate a red placeholder indicating "Before photo missing"
+    if settings.DEMO_FALLBACK_ON_QUOTA:
+        # Create a red image that clearly won't match the after photo
+        before_bytes = create_placeholder_before_image()
+    else:
+        raise RuntimeError(f"Cannot locate original before photo for incident {incident_id}")
+```
+
+**Verify:** `grep -n "before_bytes = after_photo_bytes" backend/services/audit_service.py` → should show no matches
+
+---
+
+### 3. Section 5: `ResolutionAudit` Missing Required Fields on RESOLVED Transition
+**File:** `backend/models/schemas.py` (ResolutionAudit model)  
+**Issue:** The `ResolutionAudit` model has all fields as `Optional` or with defaults, but CONTEXT.md §4.4 requires `citizen_reopen_window_expires` to be set when `audit_status == VERIFIED_FIXED`. The model doesn't enforce this.
+
+**Fix:**
+```python
+# backend/models/schemas.py - add model validator
+class ResolutionAudit(BaseModel):
+    # ... existing fields ...
+    
+    @model_validator(mode='after')
+    def validate_resolved_fields(self):
+        if self.audit_status == AuditStatus.VERIFIED_FIXED:
+            if not self.citizen_reopen_window_expires:
+                raise ValueError("citizen_reopen_window_expires is required when audit_status is VERIFIED_FIXED")
+            if self.audit_confidence < 0.8:
+                raise ValueError("audit_confidence must be >= 0.8 for VERIFIED_FIXED")
+        return self
+```
+
+**Verify:** Create ResolutionAudit with VERIFIED_FIXED but missing reopen window → validation error
+
+---
+
+### 4. Section 6: `NearbyFeed.tsx` Uses OpenStreetMap Tile Layer (External Dependency)
+**File:** `frontend/src/components/citizen/NearbyFeed.tsx:115`  
+**Issue:** The map uses `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png` directly. This violates:
+- FRONTEND.md §7.1: "No external tile URLs that can 404 during pitches"
+- INTEGRATIONS.md: Demos must run offline/with local assets
+
+**Fix:** Use a local tile server or pre-cached tiles, or at minimum add to the seed assets documentation:
+```typescript
+// Add to frontend/public/seed/README.md
+# Map Tiles (Section 6)
+// For offline demos, use a local tile server or cache OSM tiles
+# For now, document the external dependency clearly
+```
+
+**Verify:** `grep "openstreetmap.org" frontend/src/components/citizen/NearbyFeed.tsx`
+
+---
+
+## P1 — Fix Before Section 7
+
+### 5. Section 5: `/resolve` Endpoint Doesn't Validate Incident Status
+**File:** `backend/routes/incidents.py:118`  
+**Issue:** The `/api/incidents/{id}/resolve` endpoint doesn't check that the incident is in `IN_PROGRESS` status before allowing resolution. Any status can be "resolved" including `REPORTED`, `TRIAGED`, or even `RESOLVED`.
+
+**Fix:**
+```python
+# backend/routes/incidents.py - in resolve_incident_with_audit
+incident = MasterIncident.model_validate(data)
+
+if incident.status != IncidentStatus.IN_PROGRESS:
+    raise HTTPException(
+        status_code=400,
+        detail=f"Incident must be IN_PROGRESS to submit resolution. Current status: {incident.status.value}"
+    )
+```
+
+**Verify:** Try resolving a REPORTED incident → 400 error
+
+---
+
+### 6. Section 5: `reopen_incident_endpoint` Doesn't Validate 48h Window Server-Side
+**File:** `backend/routes/incidents.py:147`  
+**Issue:** The endpoint trusts the service layer to validate the 48h window, but the route doesn't explicitly check. The service does validate, but the route should also have a guard.
+
+**Fix:** Add explicit check in route before calling service:
+```python
+# backend/routes/incidents.py - in reopen_incident_endpoint
+incident = MasterIncident.model_validate(data)
+if incident.status != IncidentStatus.RESOLVED:
+    raise HTTPException(status_code=400, detail="Only RESOLVED incidents can be reopened")
+
+audit = incident.resolution_audit
+if audit and audit.citizen_reopen_window_expires:
+    expires = datetime.fromisoformat(audit.citizen_reopen_window_expires.replace("Z", "+00:00"))
+    if datetime.now(timezone.utc) > expires:
+        raise HTTPException(status_code=403, detail="48-hour citizen reopen window has expired")
+```
+
+**Verify:** Try reopening after 48h → 403 error
+
+---
+
+### 7. Section 6: `SnapSpeakForm` Doesn't Handle `IntakeTriageResponse.is_valid_civic_issue == false` Gracefully
+**File:** `frontend/src/components/citizen/SnapSpeakForm.tsx`  
+**Issue:** When Gemini rejects the input (blurry photo, selfie, etc.), the component shows an alert but doesn't clear the form or allow easy retry. The user is stuck with the rejected media.
+
+**Fix:** Add a "Clear & Retry" button in the rejection state:
+```typescript
+// In SnapSpeakForm.tsx - Sanity Gate Rejection State
+{triageData && !triageData.is_valid_civic_issue && (
+  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-2 animate-fade-in">
+    {/* ... existing rejection message ... */}
+    <button
+      onClick={() => {
+        setTriageData(null);
+        setTriageError(null);
+        // Optionally keep media or clear it
+      }}
+      className="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition"
+    >
+      <Trash2 className="w-3.5 h-3.5" />
+      Clear Media & Try Again
+    </button>
+  </div>
+)}
+```
+
+**Verify:** Test with blurry photo → shows retry button
+
+---
+
+### 8. Section 6: `DuplicateModal` Missing from Exports / Not Reusable
+**File:** `frontend/src/components/citizen/DuplicateModal.tsx`  
+**Issue:** The `DuplicateModal` is imported directly from `./DuplicateModal` but the component isn't exported from a central index. This makes it non-reusable across the app.
+
+**Fix:** Create `frontend/src/components/citizen/index.ts`:
+```typescript
+export { SnapSpeakForm } from './SnapSpeakForm';
+export { DuplicateModal } from './DuplicateModal';
+export { NearbyFeed } from './NearbyFeed';
+export { MyReportsList } from './MyReportsList';
+```
+
+Then import from `@/components/citizen` instead of relative paths.
+
+**Verify:** `ls frontend/src/components/citizen/index.ts`
+
+---
+
+### 9. Section 6: `mapIcons.ts` SVG May Not Render in Vite Production Build
+**File:** `frontend/src/utils/mapIcons.ts:52`  
+**Issue:** The `createCustomSvgPin` function returns inline SVG HTML string. While `L.divIcon` with HTML strings works, complex inline SVGs with namespaces may not render correctly after Vite minification. The pattern `fill="${pinColor}"` inside the SVG string could break.
+
+**Fix:** Use a more robust approach — either:
+1. Create a React component wrapper for the pin
+2. Or ensure the SVG is a simple string without namespace issues
+3. Test production build with `npm run build && npx serve dist` and verify pins render
+
+```typescript
+// Safer approach: simpler SVG without namespace
+const html = `
+  <div style="width: ${size}px; height: ${size}px; border-radius: 50%; 
+    background: ${pinColor}; border: ${strokeWidth}px solid ${strokeColor};
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: bold; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+    ${impactScore}
+  </div>
+`;
+```
+
+**Verify:** `npm run build && npx serve dist` → check map pins on all browsers
+
+---
+
+## P2 — Improve Robustness
+
+### 10. Section 5: `MediaStorageAdapter.read_bytes` Not Fully Tested
+**File:** `backend/storage/media_store.py:20, 56, 107`  
+**Issue:** The new `read_bytes` abstract method is implemented for both Local and GCS storage but there are no tests for it. The audit service depends on this working correctly.
+
+**Fix:** Add tests in `tests/test_audit.py`:
+```python
+@pytest.mark.asyncio
+async def test_media_storage_read_bytes():
+    from backend.storage.media_store import get_media_storage
+    storage = get_media_storage()
+    
+    # Save and read back
+    test_data = b"test image data"
+    url = await storage.save_bytes(test_data, "image/jpeg", "test")
+    read_data = await storage.read_bytes(url)
+    assert read_data == test_data
+```
+
+**Verify:** `.venv/bin/python -m pytest tests/test_audit.py::test_media_storage_read_bytes -v`
+
+---
+
+### 11. Section 6: `SnapSpeakForm` Doesn't Validate File Size Before Upload
+**File:** `frontend/src/components/citizen/SnapSpeakForm.tsx`  
+**Issue:** Large photos (e.g., 10MB+) can cause upload timeouts or exceed API limits. No client-side size check.
+
+**Fix:**
+```typescript
+// In handlePhotoUpload
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+if (file.size > MAX_SIZE) {
+  setTriageError(`Photo too large (${(file.size/1024/1024).toFixed(1)}MB). Max 5MB.`);
+  return;
+}
+```
+
+**Verify:** Try uploading a 10MB photo → shows error
+
+---
+
+### 12. Section 6: `NearbyFeed` Map Doesn't Clean Up on Unmount
+**File:** `frontend/src/components/citizen/NearbyFeed.tsx:128`  
+**Issue:** The `useEffect` for Leaflet map cleanup returns a function that calls `map.remove()`, but `leafletMapRef.current` is set to `null` after. However, if the component unmounts while map is initializing, there could be a race condition.
+
+**Fix:** Add proper cleanup guard:
+```typescript
+useEffect(() => {
+  let isMounted = true;
+  
+  const initMap = async () => {
+    // ... init code ...
+    if (!isMounted) { map.remove(); return; }
+    leafletMapRef.current = map;
+  };
+  
+  initMap();
+  
+  return () => {
+    isMounted = false;
+    if (leafletMapRef.current) {
+      leafletMapRef.current.remove();
+      leafletMapRef.current = null;
+    }
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+  };
+}, [viewMode, filteredIncidents]);
+```
+
+**Verify:** Rapidly switch between tabs → no console errors
+
+---
+
+## P3 — Nice to Have
+
+### 13. Section 6: Add Loading Skeleton for `NearbyFeed` Map
+**File:** `frontend/src/components/citizen/NearbyFeed.tsx`  
+**Issue:** Map shows empty gray box while tiles load. Add a skeleton/shimmer.
+
+**Fix:** Add a simple CSS animation placeholder.
+
+---
+
+### 14. Section 5: Add Admin Work Order Generation Endpoint (ROADMAP §7.4)
+**File:** `backend/routes/incidents.py`  
+**Issue:** ROADMAP §7.4 specifies "One-Click AI Field Work Order Generator" but no endpoint exists yet.
+
+**Fix:** Add `/api/incidents/{id}/work-order` endpoint that uses Gemini to generate dispatch brief.
+
+---
+
+## Verification Checklist for Sections 5 & 6 Fixes
+
+| Check | Command | Expected |
+|-------|---------|----------|
+| All tests pass | `.venv/bin/python -m pytest tests/ -v` | 26 passed |
+| Frontend build | `cd frontend && npm run build` | Success |
+| Wire format: landmark_clues | `grep "landmark_clues" frontend/src/components/citizen/SnapSpeakForm.tsx` | Matches |
+| Wire format: detected_language | `grep "detected_language" frontend/src/components/citizen/SnapSpeakForm.tsx` | Matches |
+| Audit fallback bug | `grep "before_bytes = after_photo_bytes" backend/services/audit_service.py` | No matches |
+| Resolve status validation | `grep "IN_PROGRESS" backend/routes/incidents.py` | Check before resolve |
+| Reopen 48h validation | `grep "reopen_window_expires" backend/routes/incidents.py` | Check in route |
+| DuplicateModal exported | `ls frontend/src/components/citizen/index.ts` | Exists |
+| Map pins render in prod | `npm run build && npx serve dist` | Pins visible |
+| Media read_bytes test | `.venv/bin/python -m pytest tests/test_audit.py::test_media_storage_read_bytes` | Passes |
+
+---
+
+## Notes on Sections 5 & 6 Compliance
+
+| ROADMAP/FRONTEND Acceptance Criteria | Status |
+|--------------------------------------|--------|
+| **§5.1 Contractor closure with After photo** | ✅ (`/resolve` endpoint) |
+| **§5.2 Gemini dual-image audit** | ✅ (with fallback) |
+| **§5.3 State transition + 48h reopen** | ✅ (verified & reopen tested) |
+| **§5 Acceptance: VERIFIED_FIXED test** | ✅ |
+| **§5 Acceptance: REJECTED_MISMATCH test** | ✅ |
+| **§6.1 Snap & Speak Intake** | ✅ (photo + audio + text) |
+| **§6.1 EXIF before canvas compression** | ✅ (`exifr.gps` before canvas) |
+| **§6.1 MediaRecorder audio/webm** | ✅ |
+| **§6.2 Duplicate modal + boost** | ✅ (DuplicateModal) |
+| **§6.3 MyReports tracking + reopen** | ✅ (MyReportsList) |
+| **§6.3 Before/After + AI seal** | ✅ (Resolution Proof Card) |
+| **§6.3 48h accountability bar** | ✅ (Satisfied/Reopen buttons) |
+| **§6.4 Nearby Feed map + list** | ⚠️ (external OSM tiles) |
+| **§6.4 Upvote (+1) button** | ✅ |
+
+**Bottom Line:** Sections 5 & 6 are feature-complete with all acceptance criteria passing. The 4 critical issues (wire format in citizen form, audit fallback bug, missing status validation, external map tiles) should be fixed before Section 7 to maintain data integrity and demo reliability.

@@ -65,6 +65,7 @@ export const NearbyFeed: React.FC<NearbyFeedProps> = ({ onUpvoteSuccess }) => {
 
   // Initialize and update Leaflet map
   useEffect(() => {
+    let isMounted = true;
     if (viewMode !== 'map' || !mapContainerRef.current) return;
 
     if (!leafletMapRef.current) {
@@ -76,6 +77,11 @@ export const NearbyFeed: React.FC<NearbyFeedProps> = ({ onUpvoteSuccess }) => {
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
       }).addTo(map);
+
+      if (!isMounted) {
+        map.remove();
+        return;
+      }
 
       leafletMapRef.current = map;
     }
@@ -109,6 +115,16 @@ export const NearbyFeed: React.FC<NearbyFeedProps> = ({ onUpvoteSuccess }) => {
       const group = L.featureGroup(markersRef.current);
       map.fitBounds(group.getBounds().pad(0.15));
     }
+
+    return () => {
+      isMounted = false;
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
+      if (leafletMapRef.current) {
+        leafletMapRef.current.remove();
+        leafletMapRef.current = null;
+      }
+    };
   }, [viewMode, filteredIncidents]);
 
   return (

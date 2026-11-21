@@ -126,6 +126,13 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Issue 11: Client-side file size validation (max 5MB)
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_SIZE) {
+      setTriageError(`Photo too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Max 5MB.`);
+      return;
+    }
+
     try {
       // 1. Extract EXIF GPS coordinates BEFORE compression
       const exifData = await exifr.gps(file);
@@ -269,8 +276,9 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
         if (result.triage.priority) setEditablePriority(result.triage.priority);
         if (result.triage.agency) setEditableAgency(result.triage.agency);
         if (result.triage.ward_id) setEditableWard(result.triage.ward_id);
-        if (result.triage.extracted_landmark && !landmark) {
-          setLandmark(result.triage.extracted_landmark);
+        const extractedLandmark = result.triage.landmark_clues || result.triage.extracted_landmark;
+        if (extractedLandmark && !landmark) {
+          setLandmark(extractedLandmark);
         }
       }
     } catch (err: any) {
@@ -329,7 +337,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
       audio_url: serverAudioUrl || undefined,
       raw_text: rawText || undefined,
       transcription: triageData?.transcription || undefined,
-      language_detected: triageData?.language_detected || undefined,
+      language_detected: triageData?.detected_language || triageData?.language_detected || undefined,
       vernacular_response: triageData?.vernacular_acknowledgement || undefined,
       triage_trace: triageData?.triage_trace || undefined,
       force_new: forceNew,
@@ -523,7 +531,7 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
 
       {/* Sanity Gate Rejection State */}
       {triageData && !triageData.is_valid_civic_issue && (
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-1.5 animate-fade-in">
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-2 animate-fade-in">
           <div className="flex items-center gap-2 font-bold text-amber-400">
             <AlertCircle className="w-4 h-4" />
             Not a Valid Civic Issue / Unclear Media
@@ -532,6 +540,21 @@ export const SnapSpeakForm: React.FC<SnapSpeakFormProps> = ({ onReportSubmitted 
           {triageData.suggested_user_prompt && (
             <p className="text-amber-200/90 font-medium">💡 Suggestion: {triageData.suggested_user_prompt}</p>
           )}
+          <button
+            onClick={() => {
+              setPhotoFile(null);
+              setPhotoPreview(null);
+              setAudioBlob(null);
+              setAudioUrl(null);
+              setRawText('');
+              setTriageData(null);
+              setTriageError(null);
+            }}
+            className="w-full mt-2 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition flex items-center justify-center gap-2"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Clear Media & Try Again
+          </button>
         </div>
       )}
 
