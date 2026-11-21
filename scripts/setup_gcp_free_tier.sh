@@ -15,7 +15,7 @@ if [ -z "${1:-}" ]; then
   exit 1
 fi
 
-PROJECT_ID="civicsetu-515403"
+PROJECT_ID="$1"
 REGION="us-central1"
 GAR_NAME="civicsetu-repo"
 SA_NAME="civicsetu-deployer"
