@@ -9,21 +9,20 @@ import { TriageDrawer } from './components/admin/TriageDrawer';
 import { SystemicBriefingModal } from './components/admin/SystemicBriefingModal';
 import { apiClient } from './services/apiClient';
 import {
-  SystemStatus,
   ReportSubmissionResponse,
   MasterIncident,
   KpiSummaryResponse,
   SystemicBriefingResponse,
   AuthUser,
 } from './types/api';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, Camera, MapPin, ClipboardList } from 'lucide-react';
 
 export function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => apiClient.getStoredUser());
-  const [activeRole, setActiveRole] = useState<'citizen' | 'admin'>(() => currentUser?.role || 'citizen');
+  const [activeRole, setActiveRole] = useState<'citizen' | 'admin'>('citizen');
   const [citizenTab, setCitizenTab] = useState<'report' | 'feed' | 'my-reports'>('report');
-  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
   // Admin Portal State
   const [adminIncidents, setAdminIncidents] = useState<MasterIncident[]>([]);
@@ -35,11 +34,8 @@ export function App() {
   const [filterCriticalOnly, setFilterCriticalOnly] = useState<boolean>(false);
   const [filterOverdueOnly, setFilterOverdueOnly] = useState<boolean>(false);
 
+  // Validate stored session on mount
   useEffect(() => {
-    apiClient.getHealth()
-      .then(setSystemStatus)
-      .catch((err) => console.warn('Could not fetch initial health status:', err));
-
     if (apiClient.getToken() && !currentUser) {
       apiClient.getMe()
         .then((user) => {
@@ -52,23 +48,6 @@ export function App() {
         });
     }
   }, []);
-
-  // Sync role with logged in user if changed
-  useEffect(() => {
-    if (currentUser) {
-      setActiveRole(currentUser.role);
-    }
-  }, [currentUser]);
-
-  const handleAuthenticated = (user: AuthUser) => {
-    setCurrentUser(user);
-    setActiveRole(user.role);
-  };
-
-  const handleLogout = () => {
-    apiClient.logout();
-    setCurrentUser(null);
-  };
 
   // Fetch Admin Data when role switches to Admin
   useEffect(() => {
@@ -94,6 +73,27 @@ export function App() {
     } finally {
       setIsLoadingAdmin(false);
     }
+  };
+
+  const handleRoleChange = (newRole: 'citizen' | 'admin') => {
+    if (newRole === 'admin' && (!currentUser || currentUser.role !== 'admin')) {
+      // Prompt admin login if trying to access admin portal without admin credentials
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setActiveRole(newRole);
+  };
+
+  const handleAuthenticated = (user: AuthUser) => {
+    setCurrentUser(user);
+    setActiveRole(user.role);
+    setIsAuthModalOpen(false);
+  };
+
+  const handleLogout = () => {
+    apiClient.logout();
+    setCurrentUser(null);
+    setActiveRole('citizen');
   };
 
   const handleOpenBriefing = async () => {
@@ -124,7 +124,7 @@ export function App() {
       }
       setTimeout(() => setResetMessage(null), 3000);
     } catch {
-      setResetMessage('Demo data reset to local default.');
+      setResetMessage('City demo incidents reset to defaults.');
       setTimeout(() => setResetMessage(null), 3000);
     }
   };
@@ -133,24 +133,21 @@ export function App() {
     setCitizenTab('my-reports');
   };
 
-  if (!currentUser) {
-    return <AuthPage onAuthenticated={handleAuthenticated} />;
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-white text-neutral-950 font-sans selection:bg-neutral-900 selection:text-white">
+      {/* Top Navigation Bar */}
       <TopNav
         currentUser={currentUser}
         activeRole={activeRole}
-        onRoleChange={setActiveRole}
+        onRoleChange={handleRoleChange}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
         onResetDemo={handleResetDemo}
-        isFallback={systemStatus?.gemini?.fallback_circuit_breaker_enabled && !systemStatus?.gemini?.configured}
         activeTab={citizenTab}
         onTabChange={setCitizenTab}
       />
 
-      {/* Temporary Toast for Reset Action */}
+      {/* Temporary Toast Notification for Demo Reset */}
       {resetMessage && (
         <div className="fixed top-20 right-6 z-50 bg-neutral-950 text-white text-xs px-4 py-2.5 rounded-full shadow-2xl border border-neutral-800 flex items-center space-x-2 animate-bounce">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -158,166 +155,122 @@ export function App() {
         </div>
       )}
 
-      {/* Main Container Switch */}
-      <main className="flex-1 min-h-0 flex flex-col">
+      {/* Main Content Area - Strictly Top to Bottom Flow */}
+      <main className="flex-1 flex flex-col min-h-0">
         {activeRole === 'citizen' ? (
-          /* Editorial Split-Layout Matching Reference Image */
           <div className="flex-1 flex flex-col min-h-0">
-            {/* Top Grid: Hero (Left) + Interactive Console (Right) */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 border-b border-neutral-900">
-              {/* Left Column (7 cols): Editorial Typography & Actions */}
-              <div className="lg:col-span-6 xl:col-span-7 p-8 sm:p-12 lg:p-16 flex flex-col justify-between bg-white">
-                <div>
-                  <div className="flex items-center gap-2 text-neutral-900 font-mono text-sm uppercase tracking-widest font-bold">
-                    <span>✦</span>
-                    <span>AI-Powered Urban Governance</span>
-                  </div>
-
-                  <h1 className="text-4xl sm:text-5xl xl:text-6xl font-black tracking-tight text-neutral-950 leading-[1.06] mt-6 max-w-xl">
-                    Civic issue reporting for modern cities
-                  </h1>
-
-                  <p className="text-sm sm:text-base text-neutral-600 mt-6 max-w-lg leading-relaxed font-normal">
-                    Report potholes, garbage overflow, or waterlogging in seconds. Snap a photo or speak naturally in <strong>Hindi, Kannada, Hinglish, or English</strong>. Gemini 2.5 extracts landmarks, deduplicates tickets, and dispatches field teams.
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-4 mt-8 sm:mt-10">
-                    <button
-                      onClick={() => setCitizenTab('report')}
-                      className={`px-8 py-3.5 rounded-full text-xs font-black tracking-widest uppercase transition-all shadow-sm active:translate-y-0.5 ${
-                        citizenTab === 'report'
-                          ? 'bg-black text-white hover:bg-neutral-800'
-                          : 'bg-neutral-100 text-neutral-900 border border-neutral-300 hover:border-black'
-                      }`}
-                    >
-                      Report An Issue
-                    </button>
-
-                    <button
-                      onClick={() => setCitizenTab(citizenTab === 'feed' ? 'report' : 'feed')}
-                      className="flex items-center gap-2.5 px-6 py-3.5 rounded-full text-xs font-bold tracking-wider uppercase text-neutral-900 hover:text-black border border-neutral-300 hover:border-black transition active:translate-y-0.5"
-                    >
-                      <div className="w-5 h-5 rounded-full bg-neutral-950 text-white flex items-center justify-center text-[9px]">
-                        ▶
-                      </div>
-                      <span>{citizenTab === 'feed' ? 'Intake Form' : 'Explore Live Map'}</span>
-                    </button>
-                  </div>
+            {/* Centered Editorial Header Section */}
+            <div className="border-b border-neutral-900 bg-white py-10 sm:py-14 px-6 text-center">
+              <div className="max-w-2xl mx-auto space-y-4">
+                <div className="inline-flex items-center gap-2 text-neutral-900 font-mono text-xs uppercase tracking-widest font-bold bg-neutral-100 border border-neutral-200 px-3 py-1 rounded-full">
+                  <span>✦</span>
+                  <span>Bengaluru Urban Governance</span>
                 </div>
 
-                <div className="mt-12 pt-6 border-t border-neutral-100">
-                  <p className="text-xs font-medium text-neutral-600 flex items-center gap-2">
-                    <span className="text-rose-600 font-black text-base">*</span>
-                    <span>
-                      48-hour citizen review guarantee with automated Gemini Before/After verification audit.
-                    </span>
-                  </p>
-                </div>
-              </div>
+                <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-neutral-950 leading-[1.1]">
+                  Civic issue reporting for Bengaluru
+                </h1>
 
-              {/* Right Column (5-6 cols): Interactive Workspace Framed by 1px Vertical Border */}
-              <div className="lg:col-span-6 xl:col-span-5 border-t lg:border-t-0 lg:border-l border-neutral-900 bg-neutral-50/70 flex flex-col min-h-0 overflow-y-auto">
-                {/* Clean Tab Segment Switcher */}
-                <div className="p-3 bg-white border-b border-neutral-200 sticky top-0 z-20 flex items-center justify-between">
-                  <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-full border border-neutral-200 text-xs font-bold w-full sm:w-auto">
-                    <button
-                      onClick={() => setCitizenTab('report')}
-                      className={`flex-1 sm:flex-initial py-1.5 px-4 rounded-full transition ${
-                        citizenTab === 'report'
-                          ? 'bg-neutral-950 text-white shadow-sm'
-                          : 'text-neutral-600 hover:text-black'
-                      }`}
-                    >
-                      1. Snap & Speak
-                    </button>
+                <p className="text-sm sm:text-base text-neutral-600 max-w-xl mx-auto leading-relaxed">
+                  Report potholes, overflowing garbage, or broken streetlights in seconds. Snap a photo or speak naturally in <strong>Kannada, Hindi, or English</strong>. Verified tickets are resolved by BBMP within 48 hours.
+                </p>
 
-                    <button
-                      onClick={() => setCitizenTab('feed')}
-                      className={`flex-1 sm:flex-initial py-1.5 px-4 rounded-full transition ${
-                        citizenTab === 'feed'
-                          ? 'bg-neutral-950 text-white shadow-sm'
-                          : 'text-neutral-600 hover:text-black'
-                      }`}
-                    >
-                      2. Live Map
-                    </button>
+                {/* Centered Flow Tab Switcher */}
+                <div className="pt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                  <button
+                    onClick={() => setCitizenTab('report')}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition ${
+                      citizenTab === 'report'
+                        ? 'bg-neutral-950 text-white shadow-sm'
+                        : 'bg-neutral-100 text-neutral-700 hover:text-black hover:bg-neutral-200 border border-neutral-200'
+                    }`}
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Report An Issue</span>
+                  </button>
 
-                    <button
-                      onClick={() => setCitizenTab('my-reports')}
-                      className={`flex-1 sm:flex-initial py-1.5 px-4 rounded-full transition ${
-                        citizenTab === 'my-reports'
-                          ? 'bg-neutral-950 text-white shadow-sm'
-                          : 'text-neutral-600 hover:text-black'
-                      }`}
-                    >
-                      3. Audit Log
-                    </button>
-                  </div>
-                </div>
+                  <button
+                    onClick={() => setCitizenTab('feed')}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition ${
+                      citizenTab === 'feed'
+                        ? 'bg-neutral-950 text-white shadow-sm'
+                        : 'bg-neutral-100 text-neutral-700 hover:text-black hover:bg-neutral-200 border border-neutral-200'
+                    }`}
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>Live City Map</span>
+                  </button>
 
-                {/* Workspace Dynamic Content */}
-                <div className="flex-1 p-4 sm:p-6">
-                  {citizenTab === 'report' && <SnapSpeakForm onReportSubmitted={handleReportSubmitted} />}
-                  {citizenTab === 'feed' && <NearbyFeed />}
-                  {citizenTab === 'my-reports' && <MyReportsList />}
+                  <button
+                    onClick={() => setCitizenTab('my-reports')}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition ${
+                      citizenTab === 'my-reports'
+                        ? 'bg-neutral-950 text-white shadow-sm'
+                        : 'bg-neutral-100 text-neutral-700 hover:text-black hover:bg-neutral-200 border border-neutral-200'
+                    }`}
+                  >
+                    <ClipboardList className="w-3.5 h-3.5" />
+                    <span>Track Reports</span>
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Bottom 4-Column Metric Strip Matching Reference Image */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 bg-white divide-y lg:divide-y-0 divide-x divide-neutral-900 border-b border-neutral-900 select-none">
-              {/* Metric 1 */}
-              <div className="p-5 sm:p-6 flex items-center gap-4">
-                <div className="flex -space-x-2 overflow-hidden">
-                  <span className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-neutral-800 text-white font-bold text-[10px] flex items-center justify-center">
-                    KA
-                  </span>
-                  <span className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-neutral-600 text-white font-bold text-[10px] flex items-center justify-center">
-                    DL
-                  </span>
-                  <span className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-neutral-400 text-white font-bold text-[10px] flex items-center justify-center">
-                    MH
-                  </span>
-                </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-black text-neutral-950 leading-none">34k+</div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mt-1">
-                    Verified Resolutions
-                  </div>
-                </div>
-              </div>
+            {/* Centered Details Pane - Flowing Strictly Top-to-Bottom */}
+            <div className="flex-1 bg-neutral-50/70 py-8 sm:py-12 px-4 sm:px-6">
+              <div className="max-w-2xl sm:max-w-3xl mx-auto">
+                {citizenTab === 'report' && (
+                  <SnapSpeakForm onReportSubmitted={handleReportSubmitted} />
+                )}
 
-              {/* Metric 2 */}
-              <div className="p-5 sm:p-6">
-                <div className="text-xl sm:text-2xl font-black text-neutral-950 leading-none">18.5h</div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mt-1">
-                  Avg SLA Closure Time
-                </div>
-              </div>
+                {citizenTab === 'feed' && (
+                  <NearbyFeed />
+                )}
 
-              {/* Metric 3 */}
-              <div className="p-5 sm:p-6">
-                <div className="text-xl sm:text-2xl font-black text-neutral-950 leading-none">96.4%</div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mt-1">
-                  AI Audit Accuracy
-                </div>
-              </div>
-
-              {/* Metric 4: Agency Logos / Badges */}
-              <div className="p-5 sm:p-6 flex items-center justify-around gap-2 text-xs font-mono font-bold uppercase tracking-wider text-neutral-600">
-                <span className="hover:text-black transition">BBMP</span>
-                <span className="text-neutral-300">•</span>
-                <span className="hover:text-black transition">BESCOM</span>
-                <span className="text-neutral-300">•</span>
-                <span className="hover:text-black transition">BWSSB</span>
-                <span className="text-neutral-300">•</span>
-                <span className="hover:text-black transition">NHAI</span>
+                {citizenTab === 'my-reports' && (
+                  <MyReportsList />
+                )}
               </div>
             </div>
+
+            {/* 4-Column Metric Strip (User-Friendly, Clean Civic Terms) */}
+            <footer className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-neutral-900 border-t border-b border-neutral-900 text-xs font-mono uppercase bg-white select-none">
+              <div className="p-5 flex items-center gap-3">
+                <span className="font-mono text-xl text-neutral-400 font-bold">01</span>
+                <div>
+                  <span className="font-black text-neutral-950 block">198 Wards</span>
+                  <span className="text-[10px] text-neutral-500 normal-case">Full BBMP municipal coverage</span>
+                </div>
+              </div>
+
+              <div className="p-5 flex items-center gap-3">
+                <span className="font-mono text-xl text-neutral-400 font-bold">02</span>
+                <div>
+                  <span className="font-black text-neutral-950 block">48-Hour SLA</span>
+                  <span className="text-[10px] text-neutral-500 normal-case">Guaranteed municipal response window</span>
+                </div>
+              </div>
+
+              <div className="p-5 flex items-center gap-3">
+                <span className="font-mono text-xl text-neutral-400 font-bold">03</span>
+                <div>
+                  <span className="font-black text-neutral-950 block">Multilingual</span>
+                  <span className="text-[10px] text-neutral-500 normal-case">Kannada, Hindi & English voice intake</span>
+                </div>
+              </div>
+
+              <div className="p-5 flex items-center gap-3">
+                <span className="font-mono text-xl text-neutral-400 font-bold">04</span>
+                <div>
+                  <span className="font-black text-neutral-950 block">Verified Repairs</span>
+                  <span className="text-[10px] text-neutral-500 normal-case">Visual photo audit before closure</span>
+                </div>
+              </div>
+            </footer>
           </div>
         ) : (
-          /* Desktop-First Admin Command Center Workspace in Light Theme */
-          <div className="w-full h-[calc(100vh-64px)] overflow-hidden flex flex-col bg-neutral-50">
+          /* Municipal Admin Command Center Workspace */
+          <div className="w-full flex-1 flex flex-col bg-neutral-50">
             {/* Top Operational KPI Strip */}
             {adminKpi && (
               <KpiStrip
@@ -334,8 +287,8 @@ export function App() {
               />
             )}
 
-            {/* Split Screen Workspace: Map + Queue */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 relative border-b border-neutral-900">
+            {/* Admin Command Workspace */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-[600px] relative border-b border-neutral-900">
               {isLoadingAdmin && (
                 <div className="absolute inset-0 z-40 bg-white/80 backdrop-blur-sm flex items-center justify-center gap-2 text-neutral-900 text-xs font-bold">
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -343,8 +296,8 @@ export function App() {
                 </div>
               )}
 
-              {/* Left Column (7 cols): GIS Command Map */}
-              <div className="lg:col-span-7 h-full relative">
+              {/* GIS Command Map */}
+              <div className="lg:col-span-7 h-[450px] lg:h-auto relative">
                 <CommandMap
                   incidents={adminIncidents}
                   selectedIncident={selectedIncident}
@@ -352,8 +305,8 @@ export function App() {
                 />
               </div>
 
-              {/* Right Column (5 cols): Triage Ticket Queue */}
-              <div className="lg:col-span-5 h-full min-h-0 overflow-hidden border-l border-neutral-900 bg-white">
+              {/* Ticket Queue */}
+              <div className="lg:col-span-5 h-[500px] lg:h-auto min-h-0 overflow-hidden border-t lg:border-t-0 lg:border-l border-neutral-900 bg-white">
                 <TicketQueue
                   incidents={adminIncidents}
                   selectedIncident={selectedIncident}
@@ -383,7 +336,16 @@ export function App() {
           </div>
         )}
       </main>
+
+      {/* Authorization Modal (Kept "on the side", opened via Log In or Portal Switch) */}
+      {isAuthModalOpen && (
+        <AuthPage
+          onAuthenticated={handleAuthenticated}
+          onClose={() => setIsAuthModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
+
 export default App;
