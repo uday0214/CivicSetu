@@ -168,20 +168,20 @@ This roadmap is modularized into sequentially numbered sections (`Section 1`, `S
 ## 6. Citizen Experience & Zero-Friction Reporting Portal
 *Goal: Deliver a clean, mobile-optimized citizen web application that eliminates form fatigue, extracts pre-compression EXIF GPS, and displays escalation badges.*
 
-- **6.1. "Snap & Speak" Intake Interface**
+- [x] **6.1. "Snap & Speak" Intake Interface**
   - Photo upload/capture: Extract EXIF GPS coordinates first using **`exifr`** **before** passing image to `<canvas>` for 1024px compression.
   - Fall back to Browser Geolocation API or interactive Leaflet pin-drop if EXIF GPS is absent.
   - Audio recording: Streamlined browser-native `MediaRecorder` outputting `audio/webm` or `audio/mp4` with a **pulsing red recording indicator + elapsed-seconds timer** (no complex Web Audio API `AnalyserNode` canvas required).
   - Single-roundtrip AI triage progress indicator with instant auto-fill and vernacular acknowledgement banner.
-- **6.2. Instant Duplicate Detection Modal**
+- [x] **6.2. Instant Duplicate Detection Modal**
   - When location and intake match a nearby incident within 100m, present an alert: *"A pothole 40m away was reported 2 hours ago. Is this the same issue?"*
   - Single-tap **"Confirm & Boost Priority (+1)"** button.
-- **6.3. Citizen Tracking & Public Feed**
+- [x] **6.3. Citizen Tracking & Public Feed**
   - **My Reports Tab:** Step-by-step progress timeline (`Reported` $\rightarrow$ `Triaged` $\rightarrow$ `In Progress` $\rightarrow$ `Resolved`).
   - **Deterministic Escalation Badge:** Display color-coded badge (`Level 1 - Ward JE`, `Level 2 - Zonal Officer`, or `Level 3 - Municipal Commissioner`).
   - **Resolution Showcase:** Side-by-side Before/After comparison with Gemini AI Verification Seal.
   - **Nearby Issues Feed:** Community map view displaying surrounding issues with upvote support.
-- **Acceptance Criteria for Section 6:**
+- **Acceptance Criteria for Section 6 (PASSED):**
   - Citizen can submit an issue from a smartphone/browser in under 20 seconds.
   - Photos with EXIF metadata auto-populate the map pin before compression.
   - Vernacular confirmation message is cleanly rendered.

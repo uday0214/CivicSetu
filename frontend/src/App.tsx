@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { TopNav } from './components/layout/TopNav';
+import { SnapSpeakForm } from './components/citizen/SnapSpeakForm';
+import { NearbyFeed } from './components/citizen/NearbyFeed';
+import { MyReportsList } from './components/citizen/MyReportsList';
 import { apiClient } from './services/apiClient';
-import { SystemStatus } from './types/api';
-import { CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, MapPin } from 'lucide-react';
+import { SystemStatus, ReportSubmissionResponse } from './types/api';
+import { CheckCircle2, AlertTriangle, ArrowRight, Camera, MapPin, Clock } from 'lucide-react';
 
 export function App() {
   const [activeRole, setActiveRole] = useState<'citizen' | 'admin'>('citizen');
+  const [citizenTab, setCitizenTab] = useState<'report' | 'feed' | 'my-reports'>('report');
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
 
@@ -26,8 +30,13 @@ export function App() {
     }
   };
 
+  const handleReportSubmitted = (_result: ReportSubmissionResponse) => {
+    // Automatically switch to My Reports tab so user sees their new ticket
+    setCitizenTab('my-reports');
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
       <TopNav
         activeRole={activeRole}
         onRoleChange={setActiveRole}
@@ -47,49 +56,53 @@ export function App() {
       <main className="flex-1">
         {activeRole === 'citizen' ? (
           /* Mobile-First Citizen Shell Container */
-          <div className="max-w-lg mx-auto p-4 sm:p-6 space-y-4">
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-orange-600 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">
-                  Citizen Reporting Portal
-                </span>
-                <span className="text-xs text-slate-500 flex items-center space-x-1">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Ward 14 • Indiranagar</span>
-                </span>
-              </div>
+          <div className="max-w-xl mx-auto flex flex-col min-h-[calc(100vh-56px)]">
+            {/* Top Sub-Nav Tabs */}
+            <div className="p-3 sticky top-14 z-30 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
+              <div className="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+                <button
+                  onClick={() => setCitizenTab('report')}
+                  className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 transition ${
+                    citizenTab === 'report'
+                      ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Report</span>
+                </button>
 
-              <h1 className="text-xl font-bold text-slate-900 leading-tight">
-                Report a Civic Issue in Under 20 Seconds
-              </h1>
-              <p className="text-xs text-slate-600">
-                Snap a photo or speak in Hindi, Kannada, Telugu, Tamil, or English. Gemini AI classifies the defect and routes it directly to BBMP, PWD, or BESCOM.
-              </p>
+                <button
+                  onClick={() => setCitizenTab('feed')}
+                  className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 transition ${
+                    citizenTab === 'feed'
+                      ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>Nearby Feed</span>
+                </button>
 
-              <div className="pt-2">
-                <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center bg-slate-50 hover:bg-slate-100 transition cursor-pointer">
-                  <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mx-auto mb-2">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <p className="text-xs font-semibold text-slate-800">
-                    Section 1 Scaffolding Complete
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Ready for Section 2 (Data Models & Schemas) and Section 3 (Multimodal Intake).
-                  </p>
-                </div>
+                <button
+                  onClick={() => setCitizenTab('my-reports')}
+                  className={`py-2 px-3 rounded-lg font-bold flex items-center justify-center gap-1.5 transition ${
+                    citizenTab === 'my-reports'
+                      ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>My Reports</span>
+                </button>
               </div>
             </div>
 
-            {/* System Status Pill */}
-            <div className="bg-white border border-slate-200 rounded-lg p-3 text-xs flex items-center justify-between text-slate-600">
-              <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span>Backend API: <strong>{systemStatus?.status || 'Connecting...'}</strong></span>
-              </div>
-              <span className="text-[11px] font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-500">
-                Storage: {systemStatus?.storage?.mode || 'memory'}
-              </span>
+            {/* Tab Contents */}
+            <div className="flex-1">
+              {citizenTab === 'report' && <SnapSpeakForm onReportSubmitted={handleReportSubmitted} />}
+              {citizenTab === 'feed' && <NearbyFeed />}
+              {citizenTab === 'my-reports' && <MyReportsList />}
             </div>
           </div>
         ) : (

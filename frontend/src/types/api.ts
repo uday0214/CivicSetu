@@ -38,6 +38,29 @@ export type CivicCategory =
   | 'Electricity & Lighting'
   | 'Public Safety';
 
+export const CIVIC_CATEGORIES: CivicCategory[] = [
+  'Roads & Footpaths',
+  'Sanitation & Waste',
+  'Water & Drainage',
+  'Electricity & Lighting',
+  'Public Safety',
+];
+
+export const PRIORITY_TIERS: PriorityTier[] = [
+  'P0_CRITICAL',
+  'P1_HIGH',
+  'P2_MEDIUM',
+  'P3_LOW',
+];
+
+export const INDIAN_AGENCIES: IndianAgency[] = [
+  'ULB_MUNICIPAL',
+  'STATE_PWD',
+  'NHAI',
+  'DISCOM_ELECTRICAL',
+  'WATER_SEWERAGE_BOARD',
+];
+
 export interface LocationData {
   lat: number;
   lng: number;
