@@ -144,7 +144,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 Open [http://localhost:8000](http://localhost:8000) in your browser.
 
-> For production deployment details, Docker containerization, and Render / Google Cloud Run setup, refer to the [Deployment Guide](file:///home/ud_1402/civicSetu/docs/DEPLOYMENT.md).
+> For production deployment details, Docker containerization, and Render / Google Cloud Run setup, refer to the [Deployment Guide](docs/DEPLOYMENT.md).
 
 ---
 
@@ -153,16 +153,16 @@ Open [http://localhost:8000](http://localhost:8000) in your browser.
 Explore the detailed architecture, engineering guides, and agent specifications:
 
 ### Core Documentation
-* 📘 [**Technical Architecture & API Reference**](file:///home/ud_1402/civicSetu/docs/TECHNICAL.md) — System architecture diagram, verified tech stack, REST API route contracts, and directory structure.
-* 🚀 [**Deployment & Setup Guide**](file:///home/ud_1402/civicSetu/docs/DEPLOYMENT.md) — Local environment configuration, Render web service instructions, and Google Cloud Run single-container deployment.
-* 🖥️ [**Frontend Architecture & UI Guidelines**](file:///home/ud_1402/civicSetu/docs/FRONTEND.md) — React 18 component hierarchy, Leaflet GIS mapping, Tailwind styling, and responsive UX design.
-* 🧪 [**Sign-Off Verification & Test Report**](file:///home/ud_1402/civicSetu/docs/SIGN_OFF_REPORT.md) — 51-test verification matrix, edge case handling, and multimodal audit validation.
+* 📘 [**Technical Architecture & API Reference**](docs/TECHNICAL.md) — System architecture diagram, verified tech stack, REST API route contracts, and directory structure.
+* 🚀 [**Deployment & Setup Guide**](docs/DEPLOYMENT.md) — Local environment configuration, Render web service instructions, and Google Cloud Run single-container deployment.
+* 🖥️ [**Frontend Architecture & UI Guidelines**](docs/agents/FRONTEND.md) — React 18 component hierarchy, Leaflet GIS mapping, Tailwind styling, and responsive UX design.
+* 🧪 [**Sign-Off Verification & Test Report**](docs/agents/SIGN_OFF_REPORT.md) — 51-test verification matrix, edge case handling, and multimodal audit validation.
 
 ### Agent Specifications & Engineering Logs
-* 🗺️ [**Roadmap & Milestones**](file:///home/ud_1402/civicSetu/docs/agents/ROADMAP.md) — Core functional requirements and project phases.
-* 🛠️ [**Hardened Fixes & Schema Alignment**](file:///home/ud_1402/civicSetu/docs/agents/FIXES.md) — Comprehensive record of bug fixes, TypeScript contract synchronizations, and model fallbacks.
-* 🏛️ [**Indian Municipal Context & Jurisdiction Matrix**](file:///home/ud_1402/civicSetu/docs/agents/CONTEXT.md) — Detailed governance models for BBMP, GHMC, GCC, DISCOMs, and Water Supply boards.
-* 🔌 [**Integration Contracts & Fallback Engine**](file:///home/ud_1402/civicSetu/docs/agents/INTEGRATIONS.md) — Google Gemini 2.5 Flash SDK specifications and OpenRouter fallback architecture.
+* 🗺️ [**Roadmap & Milestones**](docs/agents/ROADMAP.md) — Core functional requirements and project phases.
+* 🛠️ [**Hardened Fixes & Schema Alignment**](docs/agents/FIXES.md) — Comprehensive record of bug fixes, TypeScript contract synchronizations, and model fallbacks.
+* 🏛️ [**Indian Municipal Context & Jurisdiction Matrix**](docs/agents/CONTEXT.md) — Detailed governance models for BBMP, GHMC, GCC, DISCOMs, and Water Supply boards.
+* 🔌 [**Integration Contracts & Fallback Engine**](docs/agents/INTEGRATIONS.md) — Google Gemini 2.5 Flash SDK specifications and OpenRouter fallback architecture.
 
 ---
 

@@ -32,10 +32,10 @@ To ensure total architectural consistency across development phases, all code sc
 
 | Document | Authority Domain | Covered Sections |
 | :--- | :--- | :--- |
-| **[`ROADMAP.md`](file:///home/ud_1402/civicSetu/docs/ROADMAP.md)** | **Authoritative Execution Checklist:** Defines the step-by-step sequential delivery, technical deliverables, and acceptance criteria for all 9 sections. | Sections 1 – 9 |
-| **[`CONTEXT.md`](file:///home/ud_1402/civicSetu/docs/CONTEXT.md)** | **Authoritative Architecture & Data Model:** Defines system architecture, canonical Pydantic schemas, Indian agency jurisdiction hierarchy, Gemini prompt contracts, and the 7 engineering guardrails. | Systemwide |
-| **[`FRONTEND.md`](file:///home/ud_1402/civicSetu/docs/FRONTEND.md)** | **Authoritative UI/UX & Client Design:** Governs all visual tokens, Tailwind palettes, Indic typography, mobile-first citizen layouts, desktop split-screen GIS command center, custom SVG `L.divIcon` markers, and component layouts. | Section 1.4 (Role Switcher)<br/>Section 6 (Citizen Experience)<br/>Section 7 (Admin Command Center) |
-| **[`INTEGRATIONS.md`](file:///home/ud_1402/civicSetu/docs/INTEGRATIONS.md)** | **Authoritative Infrastructure & Always Free Spec:** Governs single-container Docker packaging, GCP `us-central1` Always Free quotas, CLI provisioning commands, Secret Manager IAM, and the SPA catch-all route exclusions. | Section 1.3 (Storage Adapter)<br/>Section 9.2 (Cloud Run Dockerfile) |
+| **[`ROADMAP.md`](ROADMAP.md)** | **Authoritative Execution Checklist:** Defines the step-by-step sequential delivery, technical deliverables, and acceptance criteria for all 9 sections. | Sections 1 – 9 |
+| **[`CONTEXT.md`](CONTEXT.md)** | **Authoritative Architecture & Data Model:** Defines system architecture, canonical Pydantic schemas, Indian agency jurisdiction hierarchy, Gemini prompt contracts, and the 7 engineering guardrails. | Systemwide |
+| **[`FRONTEND.md`](FRONTEND.md)** | **Authoritative UI/UX & Client Design:** Governs all visual tokens, Tailwind palettes, Indic typography, mobile-first citizen layouts, desktop split-screen GIS command center, custom SVG `L.divIcon` markers, and component layouts. | Section 1.4 (Role Switcher)<br/>Section 6 (Citizen Experience)<br/>Section 7 (Admin Command Center) |
+| **[`INTEGRATIONS.md`](INTEGRATIONS.md)** | **Authoritative Infrastructure & Always Free Spec:** Governs single-container Docker packaging, GCP `us-central1` Always Free quotas, CLI provisioning commands, Secret Manager IAM, and the SPA catch-all route exclusions. | Section 1.3 (Storage Adapter)<br/>Section 9.2 (Cloud Run Dockerfile) |
 
 ---
 

@@ -71,7 +71,7 @@ CivicSetu is deployed as a single Python Web Service on [Render](https://render.
 * **Branch**: `main`
 * **Runtime**: `Python`
 * **Build Command**: `./render_build.sh`
-* **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT` (specified via [`Procfile`](file:///home/ud_1402/civicSetu/Procfile))
+* **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT` (specified via [`Procfile`](../Procfile))
 * **Environment Variables on Render**:
   * `PYTHON_VERSION`: `3.12.0` (or Node.js 18+ available in Render environment)
   * `GEMINI_API_KEY`: `<YOUR_GEMINI_KEY>`
@@ -88,7 +88,7 @@ The build script performs three deterministic tasks during deployment:
 
 ## 4. Google Cloud Run Deployment (Single-Container Architecture)
 
-For production enterprise scale, CivicSetu includes a multi-stage [`Dockerfile`](file:///home/ud_1402/civicSetu/Dockerfile) that packages both the React 18 Vite frontend and the FastAPI backend into an optimized Alpine/Debian container.
+For production enterprise scale, CivicSetu includes a multi-stage [`Dockerfile`](../Dockerfile) that packages both the React 18 Vite frontend and the FastAPI backend into an optimized Alpine/Debian container.
 
 ### Deploying to Cloud Run
 
